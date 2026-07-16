@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // OOO reports — readable by anyone (public dashboard), writable only from server SDK
+    match /ooo_reports/{reportId} {
+      allow read: if true;
+      allow write: if false;  // Only the Admin SDK (server-side) can write
+    }
+  }
+}

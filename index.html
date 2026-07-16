@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Aqua-Aerobic Systems daily Out of Office dashboard — live OOO and Offsite status for all departments.">
+  <title>AquaDashboard &ndash; Out of Office Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Loading overlay -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="loading-content">
+      <div class="spinner"></div>
+      <p class="loading-text">Loading dashboard&hellip;</p>
+    </div>
+  </div>
+
+  <div class="page" id="page">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-left">
+        <p class="header-label">Aqua-Aerobic Systems, Inc.</p>
+        <h1 id="header-title">Out of Office Report</h1>
+        <p class="date" id="header-date">&nbsp;</p>
+      </div>
+      <div class="header-count" id="header-counts">
+        <span class="hc-num" id="hc-ooo">0</span><span class="hc-label"> &ndash; OOO</span>
+        <span class="hc-sep">|</span>
+        <span class="hc-num" id="hc-offsite">0</span><span class="hc-label"> &ndash; Offsite</span>
+      </div>
+    </div>
+    <div class="accent-bar"></div>
+
+    <!-- Controls bar -->
+    <div class="controls">
+      <select id="dept-search">
+        <option value="">All Departments</option>
+      </select>
+      <input id="name-search" type="text" placeholder="&#128269; Search by name&hellip;" autocomplete="off">
+      <div class="status-filter">
+        <input type="radio" name="sf" id="sf-all" value="all">
+        <label for="sf-all">All</label>
+        <input type="radio" name="sf" id="sf-ooo" value="ooo" checked>
+        <label for="sf-ooo">&#9679;&nbsp;OOO</label>
+        <input type="radio" name="sf" id="sf-offsite" value="offsite">
+        <label for="sf-offsite">&#9679;&nbsp;Offsite</label>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="body" id="dashboard-body">
+      <p class="none" id="empty-state" style="display:none;">&#10003;&nbsp; No team members are out of office today.</p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div class="help-section">
+        <div class="help-title">&#9432;&nbsp; How to Appear on This Report</div>
+        <div class="help-desc">
+          Go to your <b>group departmental calendar</b> in Outlook and add an event using one of the formats below:
+        </div>
+        <div class="help-statuses">
+          <b class="status-ooo-text">OOO</b> &mdash; Out of Office (Vacation, PTO, PLAW, Sick, Personal Day, etc.)<br>
+          <b class="status-offsite-text">Offsite</b> &mdash; Remote Work, Business Travel, Working Elsewhere
+        </div>
+        <table class="help-table">
+          <tr><td class="ht-type">OOO (all day)</td><td><span class="status-ooo-text">Chuck Konkol &ndash; OOO</span></td></tr>
+          <tr><td class="ht-type">Offsite (all day)</td><td><span class="status-offsite-text">Chuck Konkol &ndash; Working Elsewhere</span></td></tr>
+          <tr><td class="ht-type">Out (time range)</td><td><span class="status-out-text">Chuck Konkol Out 10:00 AM &ndash; 11:00 AM</span></td></tr>
+          <tr><td class="ht-type">Out until</td><td><span class="status-out-text">Chuck Konkol Out until 10:00 AM</span></td></tr>
+          <tr><td class="ht-type">Out after</td><td><span class="status-out-text">Chuck Konkol Out at 10:00 AM</span></td></tr>
+        </table>
+        <p class="help-note">
+          Set the event&rsquo;s Show As to <b>Out of Office</b> in Outlook for best results.
+          The report scans calendars each morning and emails results before 8:00 AM.
+        </p>
+      </div>
+      <div class="footer-meta">
+        Generated automatically from Outlook calendar and free/busy data.<br>
+        Times reflect the 6:00 AM &ndash; 5:00 PM working window.
+        Recurring schedules, lunch blocks, and early-return events are filtered out.
+        <span id="last-updated"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK (compat mode — works without a build step) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
