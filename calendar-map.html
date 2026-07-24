@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Aqua-Aerobic Systems department-to-group-calendar map. Find your department's shared Outlook calendar for the Out of Office dashboard.">
+  <title>AquaDashboard &ndash; Group Calendar Map</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* === Reset & Base === */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      background-color: #eef2f7;
+      min-height: 100vh;
+      padding: 24px 16px 48px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* === Loading Overlay === */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(238, 242, 247, 0.95);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+    .loading-overlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .loading-content { text-align: center; }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      margin: 0 auto 16px;
+      border: 3.5px solid #c5d3e8;
+      border-top-color: #0077ff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: #546e7a;
+      letter-spacing: 0.5px;
+    }
+
+    /* === Page Shell === */
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      box-shadow: 0 4px 24px rgba(13, 71, 161, 0.10);
+      border-radius: 10px;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .page.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* === Header === */
+    .header {
+      background: linear-gradient(135deg, #0d47a1 0%, #0077ff 60%, #1976d2 100%);
+      padding: 28px 32px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .header-left { flex: 1; }
+    .header-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #90caf9;
+      margin-bottom: 8px;
+    }
+    .header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.3px;
+      margin-bottom: 6px;
+    }
+    .header .subtitle {
+      font-size: 14px;
+      color: #bbdefb;
+    }
+    .header-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.12);
+      padding: 8px 16px;
+      border-radius: 8px;
+      backdrop-filter: blur(4px);
+    }
+    .header-badge .badge-icon { font-size: 22px; line-height: 1; }
+    .header-badge .badge-count { font-size: 20px; font-weight: 700; color: #fff; }
+    .header-badge .badge-label { font-size: 11px; color: #bbdefb; font-weight: 600; }
+
+    /* === Accent Bar === */
+    .accent-bar {
+      height: 4px;
+      background: linear-gradient(90deg, #0077ff 0%, #42a5f5 50%, #0077ff 100%);
+    }
+
+    /* === Search Bar === */
+    .search-bar {
+      background: #fff;
+      padding: 14px 32px;
+      border-bottom: 1px solid #dce3f0;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 2px 8px rgba(13, 71, 161, 0.08);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    #dept-filter {
+      flex: 1;
+      padding: 9px 14px 9px 34px;
+      border: 1.5px solid #c5d3e8;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+      color: #1a202c;
+      background: #f4f7fd url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%231565c0' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat 10px center;
+      outline: none;
+      transition: border-color 0.2s, background-color 0.2s;
+    }
+    #dept-filter:focus {
+      border-color: #0077ff;
+      background-color: #fff;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%230077ff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+    }
+    #dept-filter::placeholder { color: #9eabc0; }
+
+    .view-toggle {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .view-toggle input[type=radio] { display: none; }
+    .view-toggle label {
+      padding: 7px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1.5px solid #c5d3e8;
+      background: #f4f7fd;
+      color: #546e7a;
+      transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+      white-space: nowrap;
+      user-select: none;
+    }
+    .view-toggle label:hover {
+      transform: translateY(-1px);
+      border-color: #90caf9;
+    }
+    .view-toggle input:checked + label {
+      background: #0077ff;
+      color: #fff;
+      border-color: #0077ff;
+    }
+
+    /* === Body === */
+    .body {
+      background: #fff;
+      padding: 24px 32px 28px;
+      min-height: 200px;
+    }
+
+    /* Intro text */
+    .intro {
+      background: #e8f0fe;
+      border-left: 4px solid #0077ff;
+      border-radius: 0 6px 6px 0;
+      padding: 12px 18px;
+      margin-bottom: 24px;
+      font-size: 13px;
+      color: #1a237e;
+      line-height: 1.65;
+    }
+    .intro strong { color: #0d47a1; }
+
+    /* Source badge */
+    .source-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #e8f5e9;
+      border: 1px solid #c8e6c9;
+      color: #2e7d32;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 10px;
+      margin-left: 8px;
+      letter-spacing: 0.3px;
+    }
+    .source-badge.offline {
+      background: #fff3e0;
+      border-color: #ffe0b2;
+      color: #e65100;
+    }
+    .source-badge .pulse {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #4caf50;
+      animation: pulse 1.5s ease infinite;
+    }
+    .source-badge.offline .pulse {
+      background: #ff9800;
+      animation: none;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* === Calendar Card (by-calendar view) === */
+    .cal-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .cal-card {
+      border-radius: 6px;
+      overflow: hidden;
+      animation: fadeSlideIn 0.35s ease forwards;
+      opacity: 0;
+      box-shadow: 0 1px 4px rgba(13, 71, 161, 0.06);
+    }
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .cal-header {
+      display: flex;
+      align-items: center;
+      padding: 10px 16px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .cal-icon { font-size: 16px; line-height: 1; }
+    .cal-name {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #fff;
+      flex: 1;
+    }
+    .cal-outlook-name {
+      font-size: 10px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.15);
+      padding: 3px 10px;
+      border-radius: 10px;
+      letter-spacing: 0.3px;
+    }
+    .cal-body {
+      border: 1px solid #dce3f0;
+      border-top: none;
+      border-radius: 0 0 6px 6px;
+    }
+    .dept-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 14px 16px;
+    }
+    .dept-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #f0f5ff;
+      border: 1px solid #d0ddf0;
+      border-radius: 16px;
+      padding: 5px 14px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #1a237e;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      cursor: default;
+    }
+    .dept-chip:hover {
+      background: #dce8ff;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0,119,255,0.12);
+    }
+    .dept-chip .chip-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dept-chip.highlight {
+      background: #0077ff;
+      border-color: #0077ff;
+      color: #fff;
+    }
+    .dept-chip.highlight .chip-dot { background: #fff; }
+    .dept-count-badge {
+      font-size: 10px;
+      font-weight: 700;
+      background: rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.85);
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+    .emp-count {
+      font-size: 10px;
+      font-weight: 600;
+      color: #90a4ae;
+      margin-left: 2px;
+    }
+
+    /* === Department Table (by-department view) === */
+    .dept-table-wrap {
+      border: 1px solid #dce3f0;
+      border-radius: 6px;
+      overflow: hidden;
+      animation: fadeSlideIn 0.35s ease forwards;
+      opacity: 0;
+    }
+    .dept-table-wrap table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    .dept-table-wrap th {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #546e7a;
+      background: #f4f7fd;
+      padding: 10px 16px;
+      text-align: left;
+      border-bottom: 2px solid #dce3f0;
+    }
+    .dept-table-wrap td {
+      font-size: 12px;
+      padding: 9px 16px;
+      border-bottom: 1px solid #eef2f7;
+      vertical-align: middle;
+    }
+    .dept-table-wrap tr:last-child td { border-bottom: none; }
+    .dept-table-wrap tbody tr { transition: background 0.15s; }
+    .dept-table-wrap tbody tr:hover { background: #f0f5ff; }
+    .dept-table-wrap tr:nth-child(even) td { background: #fafbfd; }
+    .dept-table-wrap tbody tr:hover td { background: #f0f5ff; }
+    .td-dept { font-weight: 600; color: #1a202c; }
+    .td-calendar { font-weight: 600; }
+    .td-outlook { color: #546e7a; font-size: 11px; font-style: italic; }
+    .td-arrow { color: #90caf9; font-size: 16px; text-align: center; width: 36px; }
+    .td-count { color: #90a4ae; font-size: 11px; text-align: center; width: 50px; }
+    .td-unmapped { color: #e65100; font-weight: 600; font-size: 11px; }
+
+    /* No results */
+    .no-results {
+      font-size: 14px;
+      color: #718096;
+      padding: 32px 0;
+      text-align: center;
+      display: none;
+    }
+
+    /* === Footer === */
+    .footer {
+      background: #f5f7fa;
+      border-top: 1px solid #dce3f0;
+      padding: 20px 32px 18px;
+    }
+    .how-to { margin-bottom: 16px; }
+    .how-to-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #0d47a1;
+      margin-bottom: 10px;
+    }
+    .steps {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .step {
+      flex: 1;
+      min-width: 200px;
+      background: #fff;
+      border: 1px solid #dce3f0;
+      border-radius: 6px;
+      padding: 14px 16px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .step:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(13, 71, 161, 0.08);
+    }
+    .step-num {
+      display: inline-block;
+      width: 22px;
+      height: 22px;
+      background: #0077ff;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 22px;
+      margin-bottom: 8px;
+    }
+    .step-text {
+      font-size: 11px;
+      color: #37474f;
+      line-height: 1.6;
+    }
+    .step-text code {
+      background: #e8f0fe;
+      color: #0d47a1;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-family: 'Consolas', 'Courier New', monospace;
+    }
+    .footer-meta {
+      font-size: 10px;
+      color: #9e9e9e;
+      line-height: 1.6;
+      border-top: 1px solid #dce3f0;
+      padding-top: 12px;
+    }
+    .footer-meta a {
+      color: #0077ff;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .footer-meta a:hover { color: #0d47a1; }
+
+    /* === Responsive === */
+    @media (max-width: 768px) {
+      body { padding: 8px 4px 24px; }
+      .header { flex-direction: column; align-items: flex-start; gap: 12px; padding: 20px 18px 16px; }
+      .search-bar { flex-wrap: wrap; padding: 10px 18px; }
+      #dept-filter { flex: 1 1 100%; }
+      .view-toggle { flex: 1 1 100%; justify-content: center; }
+      .body { padding: 16px 18px 20px; }
+      .footer { padding: 14px 18px; }
+      .steps { flex-direction: column; }
+      .dept-table-wrap th:nth-child(4),
+      .dept-table-wrap td:nth-child(4) { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading overlay -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="loading-content">
+      <div class="spinner"></div>
+      <p class="loading-text">Loading department data&hellip;</p>
+    </div>
+  </div>
+
+  <div class="page" id="page">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-left">
+        <p class="header-label">Aqua-Aerobic Systems, Inc.</p>
+        <h1>Group Calendar Map</h1>
+        <p class="subtitle">Find which shared Outlook calendar your department uses for OOO reporting</p>
+      </div>
+      <div class="header-badge">
+        <span class="badge-icon">📅</span>
+        <div>
+          <div class="badge-count" id="cal-count">0</div>
+          <div class="badge-label">Calendars</div>
+        </div>
+      </div>
+    </div>
+    <div class="accent-bar"></div>
+
+    <!-- Search / View Toggle -->
+    <div class="search-bar">
+      <input id="dept-filter" type="text" placeholder="&#128269; Search your department&hellip;" autocomplete="off">
+      <div class="view-toggle">
+        <input type="radio" name="view" id="v-cal" value="calendar" checked>
+        <label for="v-cal">By Calendar</label>
+        <input type="radio" name="view" id="v-dept" value="department">
+        <label for="v-dept">By Department</label>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="body">
+      <div class="intro" id="intro-text">
+        <strong>How it works:</strong> Each department has a shared Outlook calendar where you log your OOO and Offsite events.
+        The AquaDashboard scans these calendars every morning. Find your department below to see which calendar to use.
+      </div>
+
+      <!-- By Calendar View -->
+      <div id="view-calendar" class="cal-grid"></div>
+
+      <!-- By Department View -->
+      <div id="view-department" style="display:none;"></div>
+
+      <p class="no-results" id="no-results">No departments match your search.</p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div class="how-to">
+        <div class="how-to-title">&#9432;&nbsp; How to Open Your Group Calendar in Outlook</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-text">
+              Open <strong>Outlook</strong> and go to the <strong>Calendar</strong> view (click the calendar icon at the bottom-left).
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-text">
+              In the left sidebar under <strong>"Other calendars"</strong> or <strong>"Shared Calendars"</strong>, look for your group calendar name shown above (e.g. <code>Engineering</code>).
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-text">
+              If you don't see it, click <strong>"Open Shared Calendar"</strong> or <strong>"Add Calendar" &rarr; "From Address Book"</strong> and search for the calendar name.
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-text">
+              Add your event using the format: <code>Chuck Konkol &ndash; OOO</code> or <code>Chuck Konkol &ndash; Working Elsewhere</code> or <code>Chuck Konkol &ndash; Offsite</code>.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-meta">
+        Part of the <a href="index.html">AquaDashboard</a> Out of Office system.
+        Department data is live from the <a href="https://aqualocator.github.io/" target="_blank" rel="noopener">AquaLocator</a> employee directory.
+        Contact IT if your calendar is missing.
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK (modular, same version as AquaLocator) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, onSnapshot, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // =========================================================================
+    // FIREBASE CONFIG (AquaLocator project)
+    // =========================================================================
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyABeCFheLuS08mxfWjCSS2ugXFbLDgnpIE",
+      authDomain: "aqualocator-23714.firebaseapp.com",
+      projectId: "aqualocator-23714",
+      storageBucket: "aqualocator-23714.appspot.com",
+      messagingSenderId: "654848563347",
+      appId: "1:654848563347:web:4702a6f55ccbf7d5edd566"
+    };
+
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+    // =========================================================================
+    // SHARED_CALENDARS — Outlook display names → group label
+    // Mirrors OOO.py SHARED_CALENDARS exactly
+    // =========================================================================
+    const SHARED_CALENDARS = {
+      "Customer Service / Aftermarket": "Customer Service/Aftermarket Sales",
+      "Engineering":                    "Engineering",
+      "IT Calendar":                    "Finance/Information Technology",
+      "PM / CA":                        "PM / CA / Product Mgmt",
+      "Sales & Marketing Time Out":     "Sales & Marketing",
+      "Shop":                           "Production Control / Buyers / Shop",
+      "HR Calendar":                    "Human Resources",
+    };
+
+    // =========================================================================
+    // DEPT → GROUP LABEL mapping
+    // Maps AquaLocator dept field values (and GAL department names) to the
+    // group labels used as values in SHARED_CALENDARS above.
+    // Case-insensitive matching is applied at runtime.
+    // =========================================================================
+    const DEPT_GROUP_MAP = {
+      // Engineering
+      "eng - standards":              "Engineering",
+      "eng - estimating":             "Engineering",
+      "eng - electrical":             "Engineering",
+      "eng - mechanical":             "Engineering",
+      "eng - applications":           "Engineering",
+      "eng - biological":             "Engineering",
+      "eng-standards":                "Engineering",
+      "engineering standards":        "Engineering",
+      "eng-estimating":               "Engineering",
+      "engineering estimating":       "Engineering",
+      "eng-electrical":               "Engineering",
+      "engineering electrical":       "Engineering",
+      "electrical engineering":       "Engineering",
+      "eng-mechanical":               "Engineering",
+      "engineering mechanical":       "Engineering",
+      "applications eng":             "Engineering",
+      "application engineering":      "Engineering",
+      "applications engineering":     "Engineering",
+      "research & development":       "Engineering",
+      "research and development":     "Engineering",
+      "r&d":                          "Engineering",
+      "contract mechanical engineering": "Engineering",
+      "biological":                   "Engineering",
+      "estimating":                   "Engineering",
+
+      // Customer Service / Aftermarket Sales
+      "aftermarket sales":            "Customer Service/Aftermarket Sales",
+      "aftermarket":                  "Customer Service/Aftermarket Sales",
+      "customer service":             "Customer Service/Aftermarket Sales",
+      "customer support":             "Customer Service/Aftermarket Sales",
+      "rotating products":            "Customer Service/Aftermarket Sales",
+      "field services":               "Customer Service/Aftermarket Sales",
+      "field service":                "Customer Service/Aftermarket Sales",
+      "mechanical/electrical field services": "Customer Service/Aftermarket Sales",
+      "aeration & mixing":            "Customer Service/Aftermarket Sales",
+      "aeration and mixing":          "Customer Service/Aftermarket Sales",
+      "tech support / warranty":      "Customer Service/Aftermarket Sales",
+      "ams":                          "Customer Service/Aftermarket Sales",
+
+      // Finance / Information Technology
+      "information services":         "Finance/Information Technology",
+      "information technologies":     "Finance/Information Technology",
+      "information technology":       "Finance/Information Technology",
+      "accounting/finance":           "Finance/Information Technology",
+      "accounting":                   "Finance/Information Technology",
+      "finance":                      "Finance/Information Technology",
+
+      // Human Resources
+      "human resources":              "Human Resources",
+      "hr":                           "Human Resources",
+
+      // PM / CA / Product Mgmt
+      "contract administration":      "PM / CA / Product Mgmt",
+      "project management":           "PM / CA / Product Mgmt",
+      "prod mgmt-aeration/mixin":     "PM / CA / Product Mgmt",
+      "prod mgmt-bio/membrane":       "PM / CA / Product Mgmt",
+      "prod mgmt-filtration":         "PM / CA / Product Mgmt",
+      "prod mgmt":                    "PM / CA / Product Mgmt",
+      "product management":           "PM / CA / Product Mgmt",
+
+      // Sales & Marketing
+      "marketing/pr":                 "Sales & Marketing",
+      "marketing":                    "Sales & Marketing",
+      "international sales":          "Sales & Marketing",
+      "sales administration":         "Sales & Marketing",
+      "sales":                        "Sales & Marketing",
+      "sales and marketing":          "Sales & Marketing",
+      "dom sales-east":               "Sales & Marketing",
+      "dom sales-southeast":          "Sales & Marketing",
+      "dom sales-midwest":            "Sales & Marketing",
+      "dom sales-west":               "Sales & Marketing",
+      "domestic sales":               "Sales & Marketing",
+      "domestic sales ne":            "Sales & Marketing",
+      "domestic sales se":            "Sales & Marketing",
+      "domestic sales - midwest":     "Sales & Marketing",
+      "domestic sales-midwest":       "Sales & Marketing",
+      "domestic sales-northeast":     "Sales & Marketing",
+      "domestic sales-southeast":     "Sales & Marketing",
+      "domestic sales-west":          "Sales & Marketing",
+      "industrial sales":             "Sales & Marketing",
+      "inside sales":                 "Sales & Marketing",
+      "administration":               "Sales & Marketing",
+      "executive":                    "Sales & Marketing",
+      "technology":                   "Sales & Marketing",
+
+      // Production Control / Buyers / Shop
+      "production control":           "Production Control / Buyers / Shop",
+      "procurement":                  "Production Control / Buyers / Shop",
+      "purchasing":                   "Production Control / Buyers / Shop",
+      "operations":                   "Production Control / Buyers / Shop",
+      "shop":                         "Production Control / Buyers / Shop",
+      "manufacturing":                "Production Control / Buyers / Shop",
+    };
+
+    // Prefix rules for departments not in the map
+    function resolveGroup(deptRaw) {
+      if (!deptRaw) return null;
+      const lc = deptRaw.toLowerCase().trim();
+
+      // 1. Exact match
+      const exact = DEPT_GROUP_MAP[lc];
+      if (exact) return exact;
+
+      // 2. Prefix rules (AquaLocator uses "Eng - ..." format)
+      if (lc.startsWith("eng -") || lc.startsWith("eng-") || lc.startsWith("engineering")) return "Engineering";
+      if (lc.startsWith("dom sales") || lc.startsWith("domestic sales")) return "Sales & Marketing";
+      if (lc.startsWith("prod mgmt") || lc.startsWith("product management")) return "PM / CA / Product Mgmt";
+      if (lc.startsWith("field service")) return "Customer Service/Aftermarket Sales";
+      if (lc.startsWith("customer")) return "Customer Service/Aftermarket Sales";
+      if (lc.startsWith("aftermarket")) return "Customer Service/Aftermarket Sales";
+      if (lc.startsWith("manufactur")) return "Production Control / Buyers / Shop";
+
+      return null; // Unmapped
+    }
+
+    // Reverse map: group label → Outlook calendar name(s)
+    function getOutlookCalendars(groupLabel) {
+      const names = [];
+      for (const [outlookName, gl] of Object.entries(SHARED_CALENDARS)) {
+        if (gl === groupLabel && !names.includes(outlookName)) {
+          names.push(outlookName);
+        }
+      }
+      return names;
+    }
+
+    // =========================================================================
+    // Color palette — keyed by Outlook calendar name
+    // =========================================================================
+    const CAL_COLORS = {
+      "Engineering":                        { bg: "#0077ff", accent: "#e3f0ff" },
+      "Customer Service / Aftermarket":     { bg: "#00897b", accent: "#e0f2f1" },
+      "Sales & Marketing Time Out":         { bg: "#e65100", accent: "#fff3e0" },
+      "PM / CA":                            { bg: "#6a1b9a", accent: "#f3e5f5" },
+      "Shop":                               { bg: "#37474f", accent: "#eceff1" },
+      "IT Calendar":                        { bg: "#1565c0", accent: "#e3f2fd" },
+      "HR Calendar":                        { bg: "#ad1457", accent: "#fce4ec" },
+    };
+    const DEFAULT_COLOR = { bg: "#546e7a", accent: "#eceff1" };
+    function getCalColor(calName) { return CAL_COLORS[calName] || DEFAULT_COLOR; }
+
+    // Display order for Outlook calendar cards
+    const CAL_ORDER = [
+      "Customer Service / Aftermarket",
+      "Engineering",
+      "HR Calendar",
+      "IT Calendar",
+      "PM / CA",
+      "Sales & Marketing Time Out",
+      "Shop",
+    ];
+
+    // =========================================================================
+    // DOM
+    // =========================================================================
+    const calGrid     = document.getElementById('view-calendar');
+    const deptView    = document.getElementById('view-department');
+    const noResults   = document.getElementById('no-results');
+    const filterInput = document.getElementById('dept-filter');
+    const calCountEl  = document.getElementById('cal-count');
+    const overlay     = document.getElementById('loading-overlay');
+    const page        = document.getElementById('page');
+    const introEl     = document.getElementById('intro-text');
+
+    // =========================================================================
+    // STATE
+    // =========================================================================
+    let liveDepts = [];       // Unique dept values from Firestore (with counts)
+    let dataSource = 'live';  // 'live' or 'static'
+
+    // =========================================================================
+    // BUILD DATA: group departments by Outlook calendar name
+    // =========================================================================
+    function buildCalendarGrouped(deptEntries) {
+      // Maps each Outlook calendar name → array of { dept, count }
+      const calToDepts = {};
+      const unmapped = [];
+
+      for (const entry of deptEntries) {
+        const group = resolveGroup(entry.dept);
+        if (!group) {
+          unmapped.push(entry);
+          continue;
+        }
+        // Find which Outlook calendar(s) serve this group
+        const cals = getOutlookCalendars(group);
+        if (cals.length === 0) {
+          unmapped.push(entry);
+          continue;
+        }
+        // Assign to ALL calendars for this group (so AMS Travel, etc. appear)
+        for (const calName of cals) {
+          if (!calToDepts[calName]) calToDepts[calName] = [];
+          calToDepts[calName].push(entry);
+        }
+      }
+
+      return { calToDepts, unmapped };
+    }
+
+    // =========================================================================
+    // RENDER: By Calendar (cards titled with real Outlook calendar names)
+    // =========================================================================
+    function renderCalendarView(filter = '') {
+      calGrid.innerHTML = '';
+      const lf = filter.toLowerCase();
+      let visibleCount = 0;
+
+      const { calToDepts, unmapped } = buildCalendarGrouped(liveDepts);
+
+      // Count calendars with departments
+      calCountEl.textContent = Object.keys(calToDepts).length;
+
+      // Sort by defined order
+      const sortedCals = Object.keys(calToDepts).sort((a, b) => {
+        const ia = CAL_ORDER.indexOf(a);
+        const ib = CAL_ORDER.indexOf(b);
+        return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+      });
+
+      sortedCals.forEach((calName, idx) => {
+        const depts = calToDepts[calName].sort((a, b) => a.dept.localeCompare(b.dept));
+        const color = getCalColor(calName);
+        // Look up the group label for this calendar (for reference)
+        const groupLabel = SHARED_CALENDARS[calName] || '';
+
+        const matchingDepts = lf ? depts.filter(d => d.dept.toLowerCase().includes(lf)) : depts;
+        const calMatch = calName.toLowerCase().includes(lf);
+        const groupMatch = groupLabel.toLowerCase().includes(lf);
+
+        if (!lf || matchingDepts.length > 0 || calMatch || groupMatch) {
+          visibleCount++;
+          const card = document.createElement('div');
+          card.className = 'cal-card';
+          card.style.animationDelay = `${idx * 0.06}s`;
+
+          const header = document.createElement('div');
+          header.className = 'cal-header';
+          header.style.background = color.bg;
+
+          header.innerHTML = `
+            <span class="cal-icon">📅</span>
+            <span class="cal-name">${calName}</span>
+            <span class="cal-outlook-name">Look for this name in Outlook</span>
+          `;
+
+          const body = document.createElement('div');
+          body.className = 'cal-body';
+
+          const list = document.createElement('div');
+          list.className = 'dept-list';
+
+          depts.forEach(d => {
+            const chip = document.createElement('span');
+            chip.className = 'dept-chip';
+            if (lf && d.dept.toLowerCase().includes(lf)) chip.classList.add('highlight');
+            chip.innerHTML = `<span class="chip-dot" style="background:${color.bg}"></span>${d.dept}`;
+            list.appendChild(chip);
+          });
+
+          body.appendChild(list);
+          card.appendChild(header);
+          card.appendChild(body);
+          calGrid.appendChild(card);
+        }
+      });
+
+      // Unmapped departments
+      const filteredUnmapped = lf ? unmapped.filter(d => d.dept.toLowerCase().includes(lf)) : unmapped;
+      if (filteredUnmapped.length > 0 || (!lf && unmapped.length > 0)) {
+        visibleCount++;
+        const displayUnmapped = lf ? filteredUnmapped : unmapped;
+        const card = document.createElement('div');
+        card.className = 'cal-card';
+        card.style.animationDelay = `${sortedCals.length * 0.06}s`;
+
+        const header = document.createElement('div');
+        header.className = 'cal-header';
+        header.style.background = '#78909c';
+        header.innerHTML = `
+          <span class="cal-icon">⚠️</span>
+          <span class="cal-name">Unmapped Departments</span>
+          <span class="cal-outlook-name" style="background:rgba(255,255,255,0.15);">Contact IT to set up a calendar</span>
+        `;
+
+        const body = document.createElement('div');
+        body.className = 'cal-body';
+        const list = document.createElement('div');
+        list.className = 'dept-list';
+
+        displayUnmapped.forEach(d => {
+          const chip = document.createElement('span');
+          chip.className = 'dept-chip';
+          if (lf && d.dept.toLowerCase().includes(lf)) chip.classList.add('highlight');
+          chip.style.borderColor = '#ffcc80';
+          chip.style.background = '#fff8e1';
+          chip.innerHTML = `<span class="chip-dot" style="background:#ff9800"></span>${d.dept}`;
+          list.appendChild(chip);
+        });
+
+        body.appendChild(list);
+        card.appendChild(header);
+        card.appendChild(body);
+        calGrid.appendChild(card);
+      }
+
+      noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+    }
+
+    // =========================================================================
+    // RENDER: By Department
+    // =========================================================================
+    function renderDeptView(filter = '') {
+      deptView.innerHTML = '';
+      const lf = filter.toLowerCase();
+
+      const rows = liveDepts
+        .filter(d => {
+          if (!lf) return true;
+          const group = resolveGroup(d.dept) || '';
+          const cals = getOutlookCalendars(group);
+          return d.dept.toLowerCase().includes(lf)
+            || group.toLowerCase().includes(lf)
+            || cals.some(c => c.toLowerCase().includes(lf));
+        })
+        .sort((a, b) => a.dept.localeCompare(b.dept));
+
+      if (rows.length === 0) {
+        noResults.style.display = 'block';
+        return;
+      }
+      noResults.style.display = 'none';
+
+      const wrap = document.createElement('div');
+      wrap.className = 'dept-table-wrap';
+
+      let html = `<table>
+        <thead>
+          <tr>
+            <th>Your Department</th>
+            <th style="width:36px"></th>
+            <th>Find This Calendar in Outlook</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+      rows.forEach(r => {
+        const group = resolveGroup(r.dept);
+        const cals = group ? getOutlookCalendars(group) : [];
+
+        if (group && cals.length > 0) {
+          const primaryCal = cals[0];
+          const color = getCalColor(primaryCal);
+          html += `<tr>
+            <td class="td-dept">${r.dept}</td>
+            <td class="td-arrow">→</td>
+            <td class="td-calendar" style="color:${color.bg}">📅 ${primaryCal}</td>
+          </tr>`;
+        } else {
+          html += `<tr>
+            <td class="td-dept">${r.dept}</td>
+            <td class="td-arrow">→</td>
+            <td class="td-unmapped">${group ? '⚠ No shared calendar' : '⚠ Unmapped — contact IT'}</td>
+          </tr>`;
+        }
+      });
+
+      html += `</tbody></table>`;
+      wrap.innerHTML = html;
+      deptView.appendChild(wrap);
+    }
+
+    // =========================================================================
+    // EVENTS
+    // =========================================================================
+    filterInput.addEventListener('input', () => {
+      const val = filterInput.value.trim();
+      const activeView = document.querySelector('input[name="view"]:checked').value;
+      if (activeView === 'calendar') renderCalendarView(val);
+      else renderDeptView(val);
+    });
+
+    document.querySelectorAll('input[name="view"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        const val = filterInput.value.trim();
+        if (radio.value === 'calendar') {
+          calGrid.style.display = '';
+          deptView.style.display = 'none';
+          renderCalendarView(val);
+        } else {
+          calGrid.style.display = 'none';
+          deptView.style.display = '';
+          renderDeptView(val);
+        }
+      });
+    });
+
+    // =========================================================================
+    // PROCESS FIRESTORE DATA
+    // =========================================================================
+    function processEmployees(employees) {
+      // Count unique dept values (exclude blank / N/A / XXX)
+      const deptCounts = {};
+      for (const emp of employees) {
+        if (emp.responsibilities === 'XXX') continue;
+        const name = (emp.name || '').trim();
+        if (!name || name.toLowerCase() === 'n/a') continue;
+        const dept = (emp.dept || '').trim();
+        if (!dept || dept.toLowerCase() === 'n/a') continue;
+        deptCounts[dept] = (deptCounts[dept] || 0) + 1;
+      }
+
+      liveDepts = Object.entries(deptCounts)
+        .map(([dept, count]) => ({ dept, count }))
+        .sort((a, b) => a.dept.localeCompare(b.dept));
+
+      dataSource = 'live';
+      updateSourceBadge();
+      renderCalendarView(filterInput.value.trim());
+
+      // Reveal
+      overlay.classList.add('hidden');
+      page.classList.add('visible');
+    }
+
+    function updateSourceBadge() {
+      const badge = dataSource === 'live'
+        ? `<span class="source-badge"><span class="pulse"></span>LIVE — ${liveDepts.length} departments</span>`
+        : `<span class="source-badge offline"><span class="pulse"></span>STATIC DATA</span>`;
+
+      introEl.innerHTML = `
+        <strong>How it works:</strong> Each department has a shared Outlook calendar where you log your OOO and Offsite events.
+        The AquaDashboard scans these calendars every morning. Find your department below to see which calendar to use.
+        ${badge}
+      `;
+    }
+
+    // =========================================================================
+    // FIREBASE INIT
+    // =========================================================================
+    async function init() {
+      try {
+        const app = initializeApp(FIREBASE_CONFIG);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        setLogLevel('error');
+
+        // Wait for auth
+        await new Promise((resolve, reject) => {
+          onAuthStateChanged(auth, async (user) => {
+            if (user) {
+              resolve();
+            } else {
+              try {
+                await signInAnonymously(auth);
+              } catch (err) {
+                reject(err);
+              }
+            }
+          });
+        });
+
+        // Fetch employees
+        const collectionPath = `artifacts/${appId}/public/data/employees`;
+        const unsubscribe = onSnapshot(
+          collection(db, collectionPath),
+          (snapshot) => {
+            unsubscribe();
+            const employees = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            processEmployees(employees);
+          },
+          (error) => {
+            unsubscribe();
+            console.error('Firestore error:', error);
+            fallbackToStatic();
+          }
+        );
+      } catch (err) {
+        console.error('Firebase init error:', err);
+        fallbackToStatic();
+      }
+    }
+
+    // =========================================================================
+    // STATIC FALLBACK (if Firestore is unavailable)
+    // =========================================================================
+    function fallbackToStatic() {
+      dataSource = 'static';
+      // Use all known departments from DEPT_GROUP_MAP as fallback
+      const seen = new Set();
+      liveDepts = [];
+      for (const key of Object.keys(DEPT_GROUP_MAP)) {
+        // Use the first capitalized variant per group
+        if (!seen.has(key)) {
+          seen.add(key);
+          // Title-case the key for display
+          const display = key.replace(/\b\w/g, c => c.toUpperCase());
+          liveDepts.push({ dept: display, count: 0 });
+        }
+      }
+      liveDepts.sort((a, b) => a.dept.localeCompare(b.dept));
+      updateSourceBadge();
+      renderCalendarView(filterInput.value.trim());
+      overlay.classList.add('hidden');
+      page.classList.add('visible');
+    }
+
+    // Go
+    init();
+  </script>
+</body>
+</html>
