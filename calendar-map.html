@@ -151,6 +151,31 @@
     }
     #dept-filter::placeholder { color: #9eabc0; }
 
+    #dept-dropdown {
+      width: 220px;
+      flex-shrink: 0;
+      padding: 9px 12px;
+      border: 1.5px solid #c5d3e8;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+      color: #1a202c;
+      background: #f4f7fd;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s, background-color 0.2s;
+      -webkit-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%231565c0' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+    }
+    #dept-dropdown:focus {
+      border-color: #0077ff;
+      background-color: #fff;
+    }
+
     .view-toggle {
       display: flex;
       gap: 4px;
@@ -500,6 +525,9 @@
     <!-- Search / View Toggle -->
     <div class="search-bar">
       <input id="dept-filter" type="text" placeholder="&#128269; Search your department&hellip;" autocomplete="off">
+      <select id="dept-dropdown">
+        <option value="">All Departments</option>
+      </select>
       <div class="view-toggle">
         <input type="radio" name="view" id="v-cal" value="calendar" checked>
         <label for="v-cal">By Calendar</label>
@@ -765,6 +793,7 @@
     const noResults   = document.getElementById('no-results');
     const filterInput = document.getElementById('dept-filter');
     const calCountEl  = document.getElementById('cal-count');
+    const deptDropdown = document.getElementById('dept-dropdown');
     const overlay     = document.getElementById('loading-overlay');
     const page        = document.getElementById('page');
     const introEl     = document.getElementById('intro-text');
@@ -808,7 +837,7 @@
     // =========================================================================
     // RENDER: By Calendar (cards titled with real Outlook calendar names)
     // =========================================================================
-    function renderCalendarView(filter = '') {
+    function renderCalendarView(filter = '', exact = false) {
       calGrid.innerHTML = '';
       const lf = filter.toLowerCase();
       let visibleCount = 0;
@@ -825,15 +854,19 @@
         return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
       });
 
+      const deptMatch = (deptName) => exact
+        ? deptName.toLowerCase() === lf
+        : deptName.toLowerCase().includes(lf);
+
       sortedCals.forEach((calName, idx) => {
         const depts = calToDepts[calName].sort((a, b) => a.dept.localeCompare(b.dept));
         const color = getCalColor(calName);
-        // Look up the group label for this calendar (for reference)
         const groupLabel = SHARED_CALENDARS[calName] || '';
 
-        const matchingDepts = lf ? depts.filter(d => d.dept.toLowerCase().includes(lf)) : depts;
-        const calMatch = calName.toLowerCase().includes(lf);
-        const groupMatch = groupLabel.toLowerCase().includes(lf);
+        const matchingDepts = lf ? depts.filter(d => deptMatch(d.dept)) : depts;
+        // For exact mode, only match on dept name; for text search, also match calendar/group
+        const calMatch = !exact && calName.toLowerCase().includes(lf);
+        const groupMatch = !exact && groupLabel.toLowerCase().includes(lf);
 
         if (!lf || matchingDepts.length > 0 || calMatch || groupMatch) {
           visibleCount++;
@@ -917,18 +950,26 @@
     // =========================================================================
     // RENDER: By Department
     // =========================================================================
-    function renderDeptView(filter = '') {
+    function renderDeptView(filter = '', exact = false) {
       deptView.innerHTML = '';
       const lf = filter.toLowerCase();
+
+      const deptMatch = (name) => exact
+        ? name.toLowerCase() === lf
+        : name.toLowerCase().includes(lf);
 
       const rows = liveDepts
         .filter(d => {
           if (!lf) return true;
-          const group = resolveGroup(d.dept) || '';
-          const cals = getOutlookCalendars(group);
-          return d.dept.toLowerCase().includes(lf)
-            || group.toLowerCase().includes(lf)
-            || cals.some(c => c.toLowerCase().includes(lf));
+          if (deptMatch(d.dept)) return true;
+          // For text search, also match on group/calendar names
+          if (!exact) {
+            const group = resolveGroup(d.dept) || '';
+            const cals = getOutlookCalendars(group);
+            return group.toLowerCase().includes(lf)
+              || cals.some(c => c.toLowerCase().includes(lf));
+          }
+          return false;
         })
         .sort((a, b) => a.dept.localeCompare(b.dept));
 
@@ -980,26 +1021,41 @@
     // =========================================================================
     // EVENTS
     // =========================================================================
-    filterInput.addEventListener('input', () => {
-      const val = filterInput.value.trim();
+    function getActiveFilter() {
+      // Dropdown selection takes priority over text search
+      const dropdownVal = deptDropdown.value;
+      if (dropdownVal) return { text: dropdownVal, exact: true };
+      return { text: filterInput.value.trim(), exact: false };
+    }
+
+    function refreshView() {
+      const { text, exact } = getActiveFilter();
       const activeView = document.querySelector('input[name="view"]:checked').value;
-      if (activeView === 'calendar') renderCalendarView(val);
-      else renderDeptView(val);
+      if (activeView === 'calendar') {
+        calGrid.style.display = '';
+        deptView.style.display = 'none';
+        renderCalendarView(text, exact);
+      } else {
+        calGrid.style.display = 'none';
+        deptView.style.display = '';
+        renderDeptView(text, exact);
+      }
+    }
+
+    filterInput.addEventListener('input', () => {
+      // Clear dropdown when typing
+      deptDropdown.value = '';
+      refreshView();
+    });
+
+    deptDropdown.addEventListener('change', () => {
+      // Clear text search when selecting from dropdown
+      filterInput.value = '';
+      refreshView();
     });
 
     document.querySelectorAll('input[name="view"]').forEach(radio => {
-      radio.addEventListener('change', () => {
-        const val = filterInput.value.trim();
-        if (radio.value === 'calendar') {
-          calGrid.style.display = '';
-          deptView.style.display = 'none';
-          renderCalendarView(val);
-        } else {
-          calGrid.style.display = 'none';
-          deptView.style.display = '';
-          renderDeptView(val);
-        }
-      });
+      radio.addEventListener('change', () => refreshView());
     });
 
     // =========================================================================
@@ -1022,12 +1078,24 @@
         .sort((a, b) => a.dept.localeCompare(b.dept));
 
       dataSource = 'live';
+      populateDropdown();
       updateSourceBadge();
-      renderCalendarView(filterInput.value.trim());
+      refreshView();
 
       // Reveal
       overlay.classList.add('hidden');
       page.classList.add('visible');
+    }
+
+    function populateDropdown() {
+      // Clear existing options except "All Departments"
+      deptDropdown.innerHTML = '<option value="">All Departments</option>';
+      liveDepts.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.dept;
+        opt.textContent = d.dept;
+        deptDropdown.appendChild(opt);
+      });
     }
 
     function updateSourceBadge() {
@@ -1106,8 +1174,9 @@
         }
       }
       liveDepts.sort((a, b) => a.dept.localeCompare(b.dept));
+      populateDropdown();
       updateSourceBadge();
-      renderCalendarView(filterInput.value.trim());
+      refreshView();
       overlay.classList.add('hidden');
       page.classList.add('visible');
     }
