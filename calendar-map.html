@@ -814,8 +814,8 @@
       "Customer Service / Aftermarket": "Customer Service/Aftermarket Sales",
       "Engineering": "Engineering",
       "IT Calendar": "Finance/Information Technology",
-      "PM / CA": "PM / CA / Product Mgmt",
-      "Sales & Marketing Time Out": "Sales & Marketing / Application Engineers",
+      "PM / CA": "PM / CA",
+      "Sales & Marketing Time Out": "Sales & Marketing / Application Engineers / Product Mgmt",
       "Shop": "Production Control / Buyers / Shop",
       "HR Calendar": "Human Resources",
     };
@@ -834,7 +834,7 @@
       "eng - estimating": "Engineering",
       "eng - electrical": "Engineering",
       "eng - mechanical": "Engineering",
-      "eng - applications": "Sales & Marketing / Application Engineers",
+      "eng - applications": "Sales & Marketing / Application Engineers / Product Mgmt",
       "eng - biological": "Engineering",
       "eng-standards": "Engineering",
       "engineering standards": "Engineering",
@@ -845,9 +845,9 @@
       "electrical engineering": "Engineering",
       "eng-mechanical": "Engineering",
       "engineering mechanical": "Engineering",
-      "applications eng": "Sales & Marketing / Application Engineers",
-      "application engineering": "Sales & Marketing / Application Engineers",
-      "applications engineering": "Sales & Marketing / Application Engineers",
+      "applications eng": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "application engineering": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "applications engineering": "Sales & Marketing / Application Engineers / Product Mgmt",
       "research & development": "Engineering",
       "research and development": "Engineering",
       "r&d": "Engineering",
@@ -881,39 +881,39 @@
       "human resources": "Human Resources",
       "hr": "Human Resources",
 
-      // PM / CA / Product Mgmt
-      "contract administration": "PM / CA / Product Mgmt",
-      "project management": "PM / CA / Product Mgmt",
-      "prod mgmt-aeration/mixin": "Sales & Marketing / Application Engineers",
-      "prod mgmt-bio/membrane": "Sales & Marketing / Application Engineers",
-      "prod mgmt-filtration": "Sales & Marketing / Application Engineers",
-      "prod mgmt": "Sales & Marketing / Application Engineers",
-      "product management": "Sales & Marketing / Application Engineers",
+      // PM / CA
+      "contract administration": "PM / CA",
+      "project management": "PM / CA",
+      "prod mgmt-aeration/mixin": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "prod mgmt-bio/membrane": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "prod mgmt-filtration": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "prod mgmt": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "product management": "Sales & Marketing / Application Engineers / Product Mgmt",
 
       // Sales & Marketing
-      "marketing/pr": "Sales & Marketing / Application Engineers",
-      "marketing": "Sales & Marketing / Application Engineers",
-      "international sales": "Sales & Marketing / Application Engineers",
-      "sales administration": "Sales & Marketing / Application Engineers",
-      "sales": "Sales & Marketing / Application Engineers",
-      "sales and marketing": "Sales & Marketing / Application Engineers",
-      "dom sales-east": "Sales & Marketing / Application Engineers",
-      "dom sales-southeast": "Sales & Marketing / Application Engineers",
-      "dom sales-midwest": "Sales & Marketing / Application Engineers",
-      "dom sales-west": "Sales & Marketing / Application Engineers",
-      "domestic sales": "Sales & Marketing / Application Engineers",
-      "domestic sales ne": "Sales & Marketing / Application Engineers",
-      "domestic sales se": "Sales & Marketing / Application Engineers",
-      "domestic sales - midwest": "Sales & Marketing / Application Engineers",
-      "domestic sales-midwest": "Sales & Marketing / Application Engineers",
-      "domestic sales-northeast": "Sales & Marketing / Application Engineers",
-      "domestic sales-southeast": "Sales & Marketing / Application Engineers",
-      "domestic sales-west": "Sales & Marketing / Application Engineers",
-      "industrial sales": "Sales & Marketing / Application Engineers",
-      "inside sales": "Sales & Marketing / Application Engineers",
-      "administration": "Sales & Marketing / Application Engineers",
-      "executive": "Sales & Marketing / Application Engineers",
-      "technology": "Sales & Marketing / Application Engineers",
+      "marketing/pr": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "marketing": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "international sales": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "sales administration": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "sales": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "sales and marketing": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "dom sales-east": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "dom sales-southeast": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "dom sales-midwest": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "dom sales-west": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "domestic sales": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "domestic sales ne": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "domestic sales se": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "domestic sales - midwest": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "domestic sales-midwest": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "domestic sales-northeast": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "domestic sales-southeast": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "domestic sales-west": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "industrial sales": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "inside sales": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "administration": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "executive": "Sales & Marketing / Application Engineers / Product Mgmt",
+      "technology": "Sales & Marketing / Application Engineers / Product Mgmt",
 
       // Production Control / Buyers / Shop
       "production control": "Production Control / Buyers / Shop",
@@ -935,8 +935,8 @@
 
       // 2. Prefix rules (AquaLocator uses "Eng - ..." format)
       if (lc.startsWith("eng -") || lc.startsWith("eng-") || lc.startsWith("engineering")) return "Engineering";
-      if (lc.startsWith("dom sales") || lc.startsWith("domestic sales")) return "Sales & Marketing / Application Engineers";
-      if (lc.startsWith("prod mgmt") || lc.startsWith("product management")) return "Sales & Marketing / Application Engineers";
+      if (lc.startsWith("dom sales") || lc.startsWith("domestic sales")) return "Sales & Marketing / Application Engineers / Product Mgmt";
+      if (lc.startsWith("prod mgmt") || lc.startsWith("product management")) return "Sales & Marketing / Application Engineers / Product Mgmt";
       if (lc.startsWith("field service")) return "Customer Service/Aftermarket Sales";
       if (lc.startsWith("customer")) return "Customer Service/Aftermarket Sales";
       if (lc.startsWith("aftermarket")) return "Customer Service/Aftermarket Sales";
