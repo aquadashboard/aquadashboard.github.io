@@ -18,16 +18,25 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 // --- DOM References ---
-const deptSelect  = document.getElementById('dept-search');
-const nameInput   = document.getElementById('name-search');
-const body        = document.getElementById('dashboard-body');
-const emptyState  = document.getElementById('empty-state');
-const headerDate  = document.getElementById('header-date');
-const hcOoo       = document.getElementById('hc-ooo');
-const hcOffsite   = document.getElementById('hc-offsite');
-const overlay     = document.getElementById('loading-overlay');
-const page        = document.getElementById('page');
+const deptSelect = document.getElementById('dept-search');
+const nameInput = document.getElementById('name-search');
+const body = document.getElementById('dashboard-body');
+const emptyState = document.getElementById('empty-state');
+const headerDate = document.getElementById('header-date');
+const hcOoo = document.getElementById('hc-ooo');
+const hcOffsite = document.getElementById('hc-offsite');
+const overlay = document.getElementById('loading-overlay');
+const page = document.getElementById('page');
 const lastUpdated = document.getElementById('last-updated');
+
+// Preferences controls
+const themeToggle = document.getElementById('theme-toggle');
+const zoomOutBtn = document.getElementById('zoom-out');
+const zoomInBtn = document.getElementById('zoom-in');
+const zoomResetBtn = document.getElementById('zoom-reset');
+const viewsSelect = document.getElementById('views-select');
+const viewSaveBtn = document.getElementById('view-save');
+const viewDeleteBtn = document.getElementById('view-delete');
 
 
 // ============================================================================
@@ -188,23 +197,23 @@ function getStatusFilterValue() {
 }
 
 function applyFilters() {
-  const deptQ   = deptSelect.value.trim().toLowerCase();
-  const nameQ   = nameInput.value.trim().toLowerCase();
+  const deptQ = deptSelect.value.trim().toLowerCase();
+  const nameQ = nameInput.value.trim().toLowerCase();
   const statusQ = getStatusFilterValue();
-  const depts   = document.querySelectorAll('.dept');
+  const depts = document.querySelectorAll('.dept');
   let anyVisible = 0;
 
   depts.forEach(d => {
-    const deptName  = d.getAttribute('data-dept') || '';
+    const deptName = d.getAttribute('data-dept') || '';
     const deptMatch = !deptQ || deptName === deptQ;
 
     const rows = d.querySelectorAll('tr[data-name]');
     let visibleRows = 0;
 
     rows.forEach(row => {
-      const rName   = row.getAttribute('data-name') || '';
+      const rName = row.getAttribute('data-name') || '';
       const rStatus = row.getAttribute('data-status') || '';
-      const nameMatch   = !nameQ || rName.indexOf(nameQ) !== -1;
+      const nameMatch = !nameQ || rName.indexOf(nameQ) !== -1;
       const statusMatch = statusQ === 'all' || rStatus === statusQ;
       const rowMatch = nameMatch && statusMatch;
       row.style.display = rowMatch ? '' : 'none';
@@ -224,6 +233,8 @@ function applyFilters() {
   if (noResults) {
     noResults.style.display = (depts.length > 0 && anyVisible === 0) ? '' : 'none';
   }
+  // Filter state is intentionally NOT persisted — every load starts clean:
+  // All Departments, empty name search, and the "All" status pill.
 }
 
 // Filter event listeners
@@ -246,15 +257,171 @@ function escapeHtml(str) {
 
 
 // ============================================================================
+// PREFERENCES (theme / zoom / saved views) — persisted in localStorage
+// ============================================================================
+
+const PREFS_KEY = 'aquaOOO.prefs';
+const VIEWS_KEY = 'aquaOOO.views';
+const ZOOM_MIN = 0.7;
+const ZOOM_MAX = 1.8;
+const ZOOM_STEP = 0.1;
+
+function loadPrefs() {
+  try { return JSON.parse(localStorage.getItem(PREFS_KEY) || '{}'); }
+  catch (e) { return {}; }
+}
+function savePrefs(prefs) {
+  try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); }
+  catch (e) { /* storage full / disabled — ignore */ }
+}
+function loadViews() {
+  try { return JSON.parse(localStorage.getItem(VIEWS_KEY) || '{}'); }
+  catch (e) { return {}; }
+}
+function saveViews(views) {
+  try { localStorage.setItem(VIEWS_KEY, JSON.stringify(views)); }
+  catch (e) { /* ignore */ }
+}
+
+// --- Theme -----------------------------------------------------------------
+function currentTheme() {
+  return document.documentElement.getAttribute('data-theme') === 'dark'
+    ? 'dark' : 'light';
+}
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  // ☀ (sun) means "switch to light"; ☾ (moon) means "switch to dark"
+  if (themeToggle) {
+    themeToggle.innerHTML = theme === 'dark' ? '☀' : '☾';
+    themeToggle.title = theme === 'dark'
+      ? 'Switch to light mode' : 'Switch to dark mode';
+  }
+  const prefs = loadPrefs();
+  prefs.theme = theme;
+  savePrefs(prefs);
+}
+function toggleTheme() {
+  applyTheme(currentTheme() === 'dark' ? 'light' : 'dark');
+}
+
+// --- Zoom ------------------------------------------------------------------
+function getZoom() {
+  const prefs = loadPrefs();
+  const z = parseFloat(prefs.zoom);
+  return isNaN(z) ? 1 : Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
+}
+function applyZoom(z) {
+  z = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(z * 100) / 100));
+  document.documentElement.style.setProperty('--user-zoom', z);
+  if (zoomResetBtn) zoomResetBtn.textContent = Math.round(z * 100) + '%';
+  const prefs = loadPrefs();
+  prefs.zoom = z;
+  savePrefs(prefs);
+}
+function nudgeZoom(delta) { applyZoom(getZoom() + delta); }
+
+// --- Saved views -----------------------------------------------------------
+function refreshViewsDropdown(selectedName) {
+  if (!viewsSelect) return;
+  const views = loadViews();
+  const names = Object.keys(views).sort((a, b) => a.localeCompare(b));
+  viewsSelect.innerHTML = '<option value="">My Views…</option>';
+  names.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    viewsSelect.appendChild(opt);
+  });
+  viewsSelect.value = selectedName && views[selectedName] ? selectedName : '';
+}
+
+function saveCurrentView() {
+  const name = (prompt('Name this view:') || '').trim();
+  if (!name) return;
+  const views = loadViews();
+  const statusEl = document.querySelector('.status-filter input[type=radio]:checked');
+  views[name] = {
+    dept: deptSelect.value,
+    name: nameInput.value,
+    status: statusEl ? statusEl.value : 'all',
+  };
+  saveViews(views);
+  refreshViewsDropdown(name);
+}
+
+function applyView(name) {
+  const views = loadViews();
+  const v = views[name];
+  if (!v) return;
+  deptSelect.value = v.dept || '';
+  nameInput.value = v.name || '';
+  const radio = document.querySelector(
+    `.status-filter input[value="${v.status || 'all'}"]`);
+  if (radio) radio.checked = true;
+  applyFilters();
+}
+
+function deleteSelectedView() {
+  const name = viewsSelect ? viewsSelect.value : '';
+  if (!name) { alert('Pick a saved view to delete first.'); return; }
+  if (!confirm(`Delete the view "${name}"?`)) return;
+  const views = loadViews();
+  delete views[name];
+  saveViews(views);
+  refreshViewsDropdown('');
+}
+
+// --- Reset all filters to their defaults after the dashboard renders -------
+function resetFiltersToDefault() {
+  // Every load starts clean, regardless of what was selected last visit:
+  //   department = All Departments, name search = empty, status = All.
+  deptSelect.value = '';
+  nameInput.value = '';
+  const allRadio = document.querySelector('.status-filter input[value="all"]');
+  if (allRadio) allRadio.checked = true;
+}
+
+function initPreferences() {
+  // Theme (attribute already set pre-paint by the inline head script)
+  applyTheme(currentTheme());
+  if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
+
+  // Zoom
+  applyZoom(getZoom());
+  if (zoomInBtn) zoomInBtn.addEventListener('click', () => nudgeZoom(ZOOM_STEP));
+  if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => nudgeZoom(-ZOOM_STEP));
+  if (zoomResetBtn) zoomResetBtn.addEventListener('click', () => applyZoom(1));
+  document.addEventListener('keydown', (e) => {
+    if (!(e.ctrlKey || e.metaKey)) return;
+    if (e.key === '+' || e.key === '=') { e.preventDefault(); nudgeZoom(ZOOM_STEP); }
+    else if (e.key === '-' || e.key === '_') { e.preventDefault(); nudgeZoom(-ZOOM_STEP); }
+    else if (e.key === '0') { e.preventDefault(); applyZoom(1); }
+  });
+
+  // Saved views
+  refreshViewsDropdown('');
+  if (viewSaveBtn) viewSaveBtn.addEventListener('click', saveCurrentView);
+  if (viewDeleteBtn) viewDeleteBtn.addEventListener('click', deleteSelectedView);
+  if (viewsSelect) viewsSelect.addEventListener('change', () => {
+    if (viewsSelect.value) applyView(viewsSelect.value);
+  });
+}
+
+
+// ============================================================================
 // INITIALIZATION
 // ============================================================================
 
 async function init() {
+  // Preferences work independent of the data load
+  initPreferences();
+
   const report = await fetchLatestReport();
 
   if (report) {
     renderDashboard(report);
-    // Apply initial filter (OOO selected by default)
+    // Start every visit on a clean slate, then apply
+    resetFiltersToDefault();
     applyFilters();
   } else {
     emptyState.style.display = '';

@@ -9,6 +9,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <!-- Apply saved theme + zoom before first paint to avoid a flash -->
+  <script>
+    (function () {
+      try {
+        var p = JSON.parse(localStorage.getItem('aquaOOO.prefs') || '{}');
+        var theme = p.theme
+          || ((window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+        if (p.zoom) document.documentElement.style.setProperty('--user-zoom', p.zoom);
+      } catch (e) { /* ignore — fall back to light */ }
+    })();
+  </script>
 </head>
 <body>
   <!-- Loading overlay -->
@@ -27,10 +39,28 @@
         <h1 id="header-title">Out of Office Report</h1>
         <p class="date" id="header-date">&nbsp;</p>
       </div>
-      <div class="header-count" id="header-counts">
-        <span class="hc-num" id="hc-ooo">0</span><span class="hc-label"> &ndash; OOO</span>
-        <span class="hc-sep">|</span>
-        <span class="hc-num" id="hc-offsite">0</span><span class="hc-label"> &ndash; Offsite</span>
+      <div class="header-right">
+        <!-- Preferences toolbar -->
+        <div class="prefs-toolbar">
+          <button id="theme-toggle" class="pref-btn" title="Toggle dark / light mode" aria-label="Toggle dark or light mode">&#9790;</button>
+          <div class="pref-group zoom-group">
+            <button id="zoom-out" class="pref-btn" title="Zoom out (Ctrl -)" aria-label="Zoom out">&minus;</button>
+            <button id="zoom-reset" class="pref-btn zoom-readout" title="Reset zoom (Ctrl 0)" aria-label="Reset zoom">100%</button>
+            <button id="zoom-in" class="pref-btn" title="Zoom in (Ctrl +)" aria-label="Zoom in">+</button>
+          </div>
+          <div class="pref-group views-group">
+            <select id="views-select" class="pref-select" title="Saved views" aria-label="Saved views">
+              <option value="">My Views&hellip;</option>
+            </select>
+            <button id="view-save" class="pref-btn" title="Save current filters as a view" aria-label="Save current view">&#128190;</button>
+            <button id="view-delete" class="pref-btn" title="Delete selected view" aria-label="Delete selected view">&#128465;</button>
+          </div>
+        </div>
+        <div class="header-count" id="header-counts">
+          <span class="hc-num" id="hc-ooo">0</span><span class="hc-label"> &ndash; OOO</span>
+          <span class="hc-sep">|</span>
+          <span class="hc-num" id="hc-offsite">0</span><span class="hc-label"> &ndash; Offsite</span>
+        </div>
       </div>
     </div>
     <div class="accent-bar"></div>
@@ -42,9 +72,9 @@
       </select>
       <input id="name-search" type="text" placeholder="&#128269; Search by name&hellip;" autocomplete="off">
       <div class="status-filter">
-        <input type="radio" name="sf" id="sf-all" value="all">
+        <input type="radio" name="sf" id="sf-all" value="all" checked>
         <label for="sf-all">All</label>
-        <input type="radio" name="sf" id="sf-ooo" value="ooo" checked>
+        <input type="radio" name="sf" id="sf-ooo" value="ooo">
         <label for="sf-ooo">&#9679;&nbsp;OOO</label>
         <input type="radio" name="sf" id="sf-offsite" value="offsite">
         <label for="sf-offsite">&#9679;&nbsp;Offsite</label>
