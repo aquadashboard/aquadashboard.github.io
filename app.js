@@ -93,10 +93,20 @@ function statusClass(displayStr) {
 
 /**
  * Determine data-status attribute value for filtering.
+ * May return multiple space-separated tokens so a row can appear under more
+ * than one filter.
  */
 function statusFilter(displayStr) {
   const lower = (displayStr || '').toLowerCase();
-  if (lower.includes('offsite')) return 'offsite';
+  if (lower.includes('offsite')) {
+    // A plain all-day "Offsite" shows under the Offsite filter only.
+    // A time-qualified Offsite — "Offsite - Out after 1:30 PM",
+    // "Offsite - Out until 1:00 PM", "Offsite - Out 10:00 AM – 4:00 PM" —
+    // means the person is also OUT for part of the day, so it shows under
+    // BOTH the OOO and Offsite filters. The presence of a time (any digit)
+    // distinguishes the two cases.
+    return /\d/.test(lower) ? 'offsite ooo' : 'offsite';
+  }
   return 'ooo';
 }
 
@@ -214,7 +224,9 @@ function applyFilters() {
       const rName = row.getAttribute('data-name') || '';
       const rStatus = row.getAttribute('data-status') || '';
       const nameMatch = !nameQ || rName.indexOf(nameQ) !== -1;
-      const statusMatch = statusQ === 'all' || rStatus === statusQ;
+      // rStatus may hold multiple tokens (e.g. "offsite ooo") so a
+      // time-qualified Offsite row matches both the OOO and Offsite filters.
+      const statusMatch = statusQ === 'all' || rStatus.split(' ').includes(statusQ);
       const rowMatch = nameMatch && statusMatch;
       row.style.display = rowMatch ? '' : 'none';
       if (rowMatch) visibleRows++;
