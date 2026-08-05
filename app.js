@@ -374,11 +374,11 @@ function deleteSelectedView() {
 // --- Reset all filters to their defaults after the dashboard renders -------
 function resetFiltersToDefault() {
   // Every load starts clean, regardless of what was selected last visit:
-  //   department = All Departments, name search = empty, status = All.
+  //   department = All Departments, name search = empty, status = OOO.
   deptSelect.value = '';
   nameInput.value = '';
-  const allRadio = document.querySelector('.status-filter input[value="all"]');
-  if (allRadio) allRadio.checked = true;
+  const oooRadio = document.querySelector('.status-filter input[value="ooo"]');
+  if (oooRadio) oooRadio.checked = true;
 }
 
 function initPreferences() {
