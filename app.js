@@ -175,9 +175,9 @@ function renderDashboard(report) {
   // Legend
   html += '<div class="legend">';
   html += '<span class="legend-ooo">&#9679;&nbsp;OOO</span>';
-  html += '<span class="legend-offsite">&#9679;&nbsp;Offsite</span>';
+  html += '<span class="legend-offsite">&#9679;&nbsp;Offsite (Office-Based employees)</span>';
   html += '<span class="legend-out">&#9679;&nbsp;Out (partial day)</span>';
-  html += '<span class="legend-remote">&#9679;&nbsp;Remote (full-time)</span>';
+  html += '<span class="legend-remote">&#9679;&nbsp;Remote (Remote-based employee)</span>';
   html += '</div>';
 
   // Departments grid
