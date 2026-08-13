@@ -53,7 +53,9 @@ const viewDeleteBtn = document.getElementById('view-delete');
  *     updated_at : Firestore Timestamp
  *     ooo_count  : number
  *     offsite_count : number
- *     departments: object — { "Engineering": [ {person, display, status}, ... ], ... }
+ *     departments: object — { "Engineering": [ {person, display, status, remote}, ... ], ... }
+ *     remote_roster : array — [ {person, department}, ... ] all full-time
+ *                     remote employees (the Remote pill lists the active ones)
  */
 async function fetchLatestReport() {
   try {
@@ -128,7 +130,23 @@ function renderDashboard(report) {
   }
 
   const departments = report.departments || {};
-  const deptNames = Object.keys(departments).sort();
+
+  // Full-time remote employees with no record today are actively working
+  // remote — they get a roster row shown only under the Remote pill.
+  // Those already on the report keep their own row (tagged "remote").
+  const shownNames = new Set();
+  Object.values(departments).forEach(list =>
+    (list || []).forEach(rec => shownNames.add((rec.person || '').toLowerCase())));
+  const rosterByDept = {};
+  (report.remote_roster || []).forEach(e => {
+    const person = e.person || '';
+    if (!person || shownNames.has(person.toLowerCase())) return;
+    const dept = e.department || 'Unassigned';
+    (rosterByDept[dept] = rosterByDept[dept] || []).push(person);
+  });
+
+  const deptNames = [...new Set(
+    [...Object.keys(departments), ...Object.keys(rosterByDept)])].sort();
 
   // If no data, show empty state
   if (deptNames.length === 0) {
@@ -159,6 +177,7 @@ function renderDashboard(report) {
   html += '<span class="legend-ooo">&#9679;&nbsp;OOO</span>';
   html += '<span class="legend-offsite">&#9679;&nbsp;Offsite</span>';
   html += '<span class="legend-out">&#9679;&nbsp;Out (partial day)</span>';
+  html += '<span class="legend-remote">&#9679;&nbsp;Remote (full-time)</span>';
   html += '</div>';
 
   // Departments grid
@@ -166,22 +185,33 @@ function renderDashboard(report) {
 
   deptNames.forEach((dept, deptIdx) => {
     const records = departments[dept] || [];
+    const roster = rosterByDept[dept] || [];
 
     html += `<div class="dept" data-dept="${dept.toLowerCase()}" style="animation-delay:${deptIdx * 0.06}s">`;
     html += '<div class="dept-header">';
     html += '<span class="dept-dot"></span>';
     html += `<span class="dept-name">${escapeHtml(dept)}</span>`;
-    html += `<span class="dept-count">${records.length}</span>`;
+    html += `<span class="dept-count">${records.length + roster.length}</span>`;
     html += '</div>';
     html += '<div class="dept-table-wrap"><table>';
 
     records.forEach(rec => {
       const display = rec.display || 'OOO';
       const cls = statusClass(display);
-      const sf = statusFilter(display);
+      // Full-time remote employees also match the Remote filter pill
+      let sf = statusFilter(display);
+      if (rec.remote) sf += ' remote';
       html += `<tr data-name="${escapeHtml((rec.person || '').toLowerCase())}" data-status="${sf}">`;
       html += `<td class="name">${escapeHtml(rec.person || '')}</td>`;
       html += `<td class="${cls}">${escapeHtml(display)}</td>`;
+      html += '</tr>';
+    });
+
+    // Active (working) remote employees — visible only under the Remote pill
+    roster.forEach(person => {
+      html += `<tr data-name="${escapeHtml(person.toLowerCase())}" data-status="remote" data-roster="1">`;
+      html += `<td class="name">${escapeHtml(person)}</td>`;
+      html += '<td class="status-remote">Remote</td>';
       html += '</tr>';
     });
 
@@ -226,7 +256,13 @@ function applyFilters() {
       const nameMatch = !nameQ || rName.indexOf(nameQ) !== -1;
       // rStatus may hold multiple tokens (e.g. "offsite ooo") so a
       // time-qualified Offsite row matches both the OOO and Offsite filters.
-      const statusMatch = statusQ === 'all' || rStatus.split(' ').includes(statusQ);
+      // Roster rows (data-roster) are full-time remote employees who are
+      // working today; they show only under the Remote pill, never under
+      // All/OOO/Offsite — the report itself stays an absence report.
+      const isRoster = row.getAttribute('data-roster') === '1';
+      const statusMatch = statusQ === 'all'
+        ? !isRoster
+        : rStatus.split(' ').includes(statusQ);
       const rowMatch = nameMatch && statusMatch;
       row.style.display = rowMatch ? '' : 'none';
       if (rowMatch) visibleRows++;

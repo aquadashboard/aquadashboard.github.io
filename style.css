@@ -33,6 +33,7 @@
   --status-ooo: #a028ff;
   --status-out: #0077ff;
   --status-offsite: #5e5e5e;
+  --status-remote: #00897b;
 
   /* Effects */
   --shadow: rgba(13, 71, 161, 0.10);
@@ -67,6 +68,7 @@ html[data-theme="dark"] {
   --status-ooo: #c07bff;
   --status-out: #4c9dff;
   --status-offsite: #9aa4b2;
+  --status-remote: #26a69a;
 
   --shadow: rgba(0, 0, 0, 0.5);
   --overlay-bg: rgba(15, 23, 42, 0.95);
@@ -343,6 +345,7 @@ body {
 .status-filter input[value="all"]:checked     + label { background: #0077ff; color: #fff; border-color: #0077ff; }
 .status-filter input[value="ooo"]:checked     + label { background: #a028ff; color: #fff; border-color: #a028ff; }
 .status-filter input[value="offsite"]:checked + label { background: #5e5e5e; color: #fff; border-color: #5e5e5e; }
+.status-filter input[value="remote"]:checked  + label { background: #00897b; color: #fff; border-color: #00897b; }
 
 /* --- Body --- */
 .body {
@@ -382,6 +385,7 @@ body {
 .legend-ooo     { color: var(--status-ooo); font-weight: 800; }
 .legend-offsite { color: var(--status-offsite); font-weight: 700; }
 .legend-out     { color: var(--status-out); font-weight: 600; }
+.legend-remote  { color: var(--status-remote); font-weight: 700; }
 
 /* Department grid — single column */
 .depts-grid {
@@ -479,6 +483,12 @@ body {
   font-size: 11px;
   width: 45%;
 }
+.status-remote {
+  color: var(--status-remote);
+  font-weight: 700;
+  font-size: 11px;
+  width: 45%;
+}
 .time {
   color: var(--text-muted);
   width: 45%;
@@ -521,6 +531,7 @@ body {
 .status-ooo-text { color: var(--status-ooo); font-weight: 700; }
 .status-offsite-text { color: var(--status-offsite); font-weight: 700; }
 .status-out-text { color: var(--status-out); font-weight: 600; }
+.status-remote-text { color: var(--status-remote); font-weight: 700; }
 
 .help-table {
   width: 100%;
