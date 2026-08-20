@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Aqua-Aerobic Systems daily on-premise roster — printable evacuation-drill reference list.">
+  <title>AquaDashboard &ndash; On-Premise Roster</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Apply saved theme before first paint (same prefs key as the dashboard) -->
+  <script>
+    (function () {
+      try {
+        var p = JSON.parse(localStorage.getItem('aquaOOO.prefs') || '{}');
+        var theme = p.theme
+          || ((window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) { /* ignore — fall back to light */ }
+    })();
+  </script>
+  <style>
+    /* Theme tokens — mirrors style.css so this page matches the dashboard */
+    :root {
+      --bg-page: #eef2f7;
+      --surface: #ffffff;
+      --surface-alt: #f4f7fd;
+      --border: #dce3f0;
+      --border-strong: #c5d3e8;
+      --text: #1a202c;
+      --text-muted: #546e7a;
+      --text-soft: #718096;
+      --brand: #0077ff;
+      --header-title: #0d47a1;
+      --summary-bg: #e8f0fe;
+      --summary-text: #1a237e;
+      --status-out: #0077ff;
+      --warn-bg: #fff8e1;
+      --warn-border: #f6c445;
+      --warn-text: #6d4c00;
+      --stale-bg: #fdecea;
+      --stale-border: #e53935;
+      --stale-text: #b71c1c;
+      --shadow: rgba(13, 71, 161, 0.10);
+    }
+    html[data-theme="dark"] {
+      --bg-page: #0f172a;
+      --surface: #1a2436;
+      --surface-alt: #212d42;
+      --border: #2c3a52;
+      --border-strong: #3a4a66;
+      --text: #e6edf6;
+      --text-muted: #9fb0c7;
+      --text-soft: #8497b0;
+      --header-title: #bbdefb;
+      --summary-bg: #16233c;
+      --summary-text: #bbd2f5;
+      --status-out: #4c9dff;
+      --warn-bg: #33290e;
+      --warn-border: #b28a1d;
+      --warn-text: #f2d179;
+      --stale-bg: #3a1513;
+      --stale-border: #ef5350;
+      --stale-text: #ff8a80;
+      --shadow: rgba(0, 0, 0, 0.5);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      background: var(--bg-page);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px 16px 48px;
+      -webkit-font-smoothing: antialiased;
+    }
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: 0 8px 28px var(--shadow);
+      padding: 28px 32px 32px;
+    }
+
+    /* Toolbar (screen only) */
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .toolbar a {
+      color: var(--brand);
+      font-weight: 600;
+      font-size: 13px;
+      text-decoration: none;
+    }
+    .toolbar a:hover { color: var(--header-title); }
+    .print-btn {
+      background: var(--brand);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 9px 18px;
+      font: 600 13px 'Inter', 'Segoe UI', Arial, sans-serif;
+      cursor: pointer;
+    }
+    .print-btn:hover { filter: brightness(1.1); }
+
+    /* Header */
+    .rpt-header { border-bottom: 3px solid var(--header-title); padding-bottom: 12px; }
+    .rpt-org { font-size: 12px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.4px; }
+    .rpt-title { font-size: 24px; font-weight: 800; color: var(--header-title); margin: 2px 0; }
+    .rpt-date { font-size: 14px; font-weight: 600; color: var(--text-muted); }
+    .rpt-counts { margin-top: 8px; font-size: 13px; color: var(--text-muted); }
+    .rpt-counts b { color: var(--text); font-size: 15px; }
+
+    /* Disclaimer — must stay visible on the printed page too */
+    .disclaimer {
+      margin: 16px 0;
+      padding: 12px 16px;
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-border);
+      border-left: 5px solid var(--warn-border);
+      border-radius: 0 4px 4px 0;
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: var(--warn-text);
+    }
+    .disclaimer b { text-transform: uppercase; letter-spacing: 0.4px; }
+
+    /* Stale-data banner */
+    .stale-banner {
+      display: none;
+      margin: 0 0 16px;
+      padding: 12px 16px;
+      background: var(--stale-bg);
+      border: 2px solid var(--stale-border);
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--stale-text);
+    }
+
+    /* Status / error message */
+    .msg { padding: 40px 0; text-align: center; font-size: 14px; color: var(--text-muted); }
+
+    /* Roster */
+    .depts {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .dept {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      break-inside: avoid;
+    }
+    .dept-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: var(--summary-bg);
+      color: var(--summary-text);
+      font-size: 12.5px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+    }
+    .dept-count {
+      font-size: 11px;
+      font-weight: 700;
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
+      border-radius: 10px;
+      padding: 1px 8px;
+    }
+    .dept table { width: 100%; border-collapse: collapse; }
+    .dept tr:nth-child(even) { background: var(--surface-alt); }
+    .dept td { padding: 5px 10px; font-size: 12.5px; border-top: 1px solid var(--border); }
+    td.chk { width: 26px; padding-right: 0; }
+    .box {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 1.5px solid var(--text-soft);
+      border-radius: 2px;
+      vertical-align: middle;
+    }
+    td.name { font-weight: 600; }
+    td.note { text-align: right; font-size: 11.5px; font-weight: 600; color: var(--status-out); white-space: nowrap; }
+
+    /* Visitors section (live from the AquaVisitor system) */
+    .visitors { margin-top: 22px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .visitors .dept-header { background: var(--summary-bg); }
+    .visitors table { width: 100%; border-collapse: collapse; }
+    .visitors tr:nth-child(even) { background: var(--surface-alt); }
+    .visitors td { padding: 5px 10px; font-size: 12.5px; border-top: 1px solid var(--border); }
+    .visitors td.meta { color: var(--text-muted); }
+    .v-note { padding: 7px 12px; font-size: 11px; color: var(--text-soft); }
+    .v-in    { color: #2e7d32; font-weight: 700; white-space: nowrap; }
+    .v-sched { color: var(--warn-text); font-weight: 600; white-space: nowrap; }
+    .v-out   { color: var(--text-soft); white-space: nowrap; }
+    tr.v-left td.name { text-decoration: line-through; color: var(--text-soft); }
+    html[data-theme="dark"] .v-in { color: #66bb6a; }
+
+    /* Footer */
+    .rpt-footer {
+      margin-top: 22px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--text-soft);
+      line-height: 1.5;
+    }
+
+    /* ---------------- Print ---------------- */
+    @media print {
+      /* Force light, ink-friendly output regardless of screen theme */
+      html, body { background: #fff !important; padding: 0; }
+      body { color: #000; }
+      .page {
+        max-width: none;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        padding: 0;
+      }
+      .toolbar { display: none; }
+      .rpt-header { border-bottom-color: #000; }
+      .rpt-org, .rpt-date, .rpt-counts { color: #000; }
+      .rpt-title { color: #000; }
+      .disclaimer {
+        background: #fff;
+        border-color: #000;
+        color: #000;
+      }
+      .stale-banner { background: #fff; border-color: #000; color: #000; }
+      .depts { display: block; columns: 2; column-gap: 24px; margin-top: 12px; }
+      .dept { border-color: #000; border-radius: 0; margin: 0 0 12px; break-inside: avoid; }
+      .dept-header { background: #fff; color: #000; border-bottom: 1.5px solid #000; }
+      .dept-count { background: #fff; border-color: #000; }
+      .dept tr:nth-child(even) { background: #fff; }
+      .dept td { border-top-color: #999; padding: 3px 8px; font-size: 11px; }
+      td.note { color: #000; }
+      .box { border-color: #000; }
+      .rpt-footer { color: #000; border-top-color: #000; }
+      .visitors { border-color: #000; border-radius: 0; break-inside: avoid; }
+      .visitors tr:nth-child(even) { background: #fff; }
+      .visitors td { border-top-color: #999; padding: 3px 8px; font-size: 11px; }
+      .v-in, .v-sched, .v-out { color: #000; }
+      .v-note { color: #000; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="toolbar">
+      <a href="index.html">&larr; Back to Out of Office dashboard</a>
+      <button class="print-btn" onclick="window.print()">&#128424;&nbsp; Print roster</button>
+    </div>
+
+    <div class="rpt-header">
+      <p class="rpt-org">Aqua-Aerobic Systems, Inc.</p>
+      <h1 class="rpt-title">On-Premise Roster &mdash; Loves Park</h1>
+      <p class="rpt-date" id="rpt-date">&nbsp;</p>
+      <p class="rpt-counts" id="rpt-counts"></p>
+    </div>
+
+    <div class="stale-banner" id="stale-banner"></div>
+
+    <div class="disclaimer">
+      <b>&#9888; Morning snapshot &mdash; not a live headcount.</b>
+      The employee list is built from Outlook calendars before 8:00 AM.
+      Someone who calls in sick at 9 AM, leaves early, or steps out to lunch
+      still shows as on premise. It is a good reference roster &mdash; fine
+      for a drill &mdash; but it should not be the only source of
+      accountability in a real emergency. The visitor list is live from the
+      AquaVisitor check-in kiosk as of the moment this page loaded &mdash;
+      reprint for fresh check-ins. Contractors and temps who bypass the
+      kiosk are not listed. Remote employees are excluded.
+    </div>
+
+    <div id="content"><p class="msg">Loading roster&hellip;</p></div>
+
+    <div class="rpt-footer">
+      Names marked <b>&ldquo;Out &hellip;&rdquo;</b> are away for part of the day but
+      expected on premise otherwise.
+      <span id="generated-at"></span>
+      <span id="printed-at"></span>
+    </div>
+  </div>
+
+  <!-- Firebase SDK (compat mode — same as the dashboard) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyD09Jljs6vus9q-nhsX16dteGsJQqgeHgU",
+      authDomain: "aquaooo.firebaseapp.com",
+      projectId: "aquaooo",
+      storageBucket: "aquaooo.firebasestorage.app",
+      messagingSenderId: "936035698294",
+      appId: "1:936035698294:web:91a7428c24bb14920ac157",
+      measurementId: "G-T0PW76LBMW"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // AquaVisitor system (separate Firebase project) — supplies today's
+    // visitor list live from the check-in kiosk.
+    const visitorConfig = {
+      apiKey: "AIzaSyC_Wl1RgIWazRk3OhodD5QQTykOcIyZMNs",
+      authDomain: "aquacheckin-e0b0b.firebaseapp.com",
+      projectId: "aquacheckin-e0b0b",
+      storageBucket: "aquacheckin-e0b0b.appspot.com",
+      messagingSenderId: "606092531450",
+      appId: "1:606092531450:web:0cb5aa1499296eae14db43",
+      measurementId: "G-T2LP2MT4DG"
+    };
+    const visDb = firebase.initializeApp(visitorConfig, 'visitors').firestore();
+
+    const content = document.getElementById('content');
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.appendChild(document.createTextNode(str));
+      return div.innerHTML;
+    }
+
+    function sortKeyLastFirst(name) {
+      const parts = (name || '').trim().split(/\s+/);
+      if (parts.length >= 2) {
+        return (parts[parts.length - 1] + ' ' + parts[0]).toLowerCase();
+      }
+      return (name || '').toLowerCase();
+    }
+
+    /**
+     * Classify a report display string for roster purposes:
+     *   'absent'  — off premise all day (all-day OOO, or any Offsite /
+     *               Working Elsewhere entry)
+     *   'partial' — away part of the day ("Out after 3:00 PM", "Out until
+     *               10:00 AM", "Out 10:00 AM – 11:00 AM") — stays on the
+     *               roster with the time window noted
+     * Unknown labels fall through to 'partial' so a person is kept ON the
+     * muster list rather than silently dropped.
+     */
+    function classify(display) {
+      const lower = (display || '').toLowerCase();
+      if (lower === 'ooo') return 'absent';
+      if (lower.includes('offsite') || lower.includes('working elsewhere')) return 'absent';
+      return 'partial';
+    }
+
+    // ---------- Visitors (AquaVisitor system, live) ----------
+
+    const pad2 = n => String(n).padStart(2, '0');
+
+    function localYMD(d) {
+      return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+    }
+
+    function toAmPm(hhmm) {
+      if (!hhmm || hhmm.indexOf(':') === -1) return '';
+      let [h, m] = hhmm.split(':').map(x => parseInt(x, 10));
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      return h + ':' + pad2(m) + ' ' + ampm;
+    }
+
+    function fmtAmPm(date) {
+      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    }
+
+    // Kiosk check-in/out values are locale strings like "8/20/2026, 9:12:34 AM"
+    function parseKioskTime(s) {
+      if (!s) return null;
+      const d = new Date(s);
+      return isNaN(d) ? null : d;
+    }
+
+    const VISIT_DATE_FIELDS = ['date', 'date2', 'date3', 'date4', 'date5', 'date6',
+      'date7', 'date8', 'date9', 'date10', 'date11', 'date12'];
+
+    // Today's scheduled arrival time for a visit doc: the dateN that falls on
+    // today, else the recurring time (rectime).
+    function schedTimeToday(d, ymd) {
+      for (const f of VISIT_DATE_FIELDS) {
+        const v = d[f] || '';
+        if (v.slice(0, 10) === ymd) return toAmPm(v.slice(11, 16));
+      }
+      return d.rectime ? toAmPm(d.rectime) : '';
+    }
+
+    /**
+     * Fetch today's visitors, mirroring the visitor app's ?report=today
+     * queries exactly (same filter/orderBy shapes, so its existing Firestore
+     * indexes cover them): one range query per dateN field, plus today's
+     * weekday flag for weekly-recurring visits (window-checked client-side).
+     * Returns an array of row objects, or throws if nothing was reachable.
+     */
+    async function fetchTodaysVisitors() {
+      const now = new Date();
+      const ymd = localYMD(now);
+      const start = ymd + 'T00:00';
+      const end = ymd + 'T23:59';
+
+      const queries = VISIT_DATE_FIELDS.map(f =>
+        visDb.collection('messages')
+          .where(f, '>=', start).where(f, '<=', end)
+          .where('remove', '==', 'No')
+          .orderBy(f, 'asc').orderBy('lastname', 'asc')
+          .get());
+      const weekdayField = ['', 'mon', 'tue', 'wed', 'thu', 'fri', ''][now.getDay()];
+      if (weekdayField) {
+        queries.push(visDb.collection('messages')
+          .where(weekdayField, '==', true).where('remove', '==', 'No').get());
+      }
+
+      const results = await Promise.allSettled(queries);
+      if (!results.some(r => r.status === 'fulfilled')) {
+        throw new Error('all visitor queries failed');
+      }
+
+      const docs = new Map();
+      results.forEach((res, i) => {
+        if (res.status !== 'fulfilled') {
+          console.error('visitor query', i, 'failed:', res.reason);
+          return;
+        }
+        res.value.forEach(doc => {
+          const d = doc.data();
+          if (i >= VISIT_DATE_FIELDS.length) {
+            // Recurring hit — only counts inside its begin/end window
+            const d13 = (d.date13 || '').slice(0, 10);
+            const d14 = (d.date14 || '').slice(0, 10);
+            if (!d13 || !d14 || ymd < d13 || ymd > d14) return;
+          }
+          docs.set(doc.id, d);
+        });
+      });
+
+      const todayDs = now.toDateString();
+      const rows = [...docs.values()].map(d => {
+        const ci = parseKioskTime(d.checkin);
+        const co = parseKioskTime(d.checkout);
+        // Doc-level kiosk times persist across days on multi-date visits —
+        // only a timestamp from TODAY counts.
+        const ciToday = ci && ci.toDateString() === todayDs;
+        const coToday = co && co.toDateString() === todayDs;
+        let cls, label, present;
+        if (coToday && (!ciToday || co >= ci)) {
+          cls = 'v-out'; label = 'Checked out ' + fmtAmPm(co); present = false;
+        } else if (ciToday) {
+          cls = 'v-in'; label = 'Checked in ' + fmtAmPm(ci); present = true;
+        } else {
+          const t = schedTimeToday(d, ymd);
+          cls = 'v-sched';
+          label = 'Not checked in' + (t ? ' — expected ' + t : '');
+          present = false;
+        }
+        return {
+          first: d.firstname || '', last: d.lastname || '',
+          company: d.company || '', host: d.message || d.login || '',
+          cls, label, present, left: cls === 'v-out',
+        };
+      });
+      rows.sort((a, b) => {
+        const ka = (a.last + ' ' + a.first).toLowerCase();
+        const kb = (b.last + ' ' + b.first).toLowerCase();
+        return ka < kb ? -1 : ka > kb ? 1 : 0;
+      });
+      return rows;
+    }
+
+    function renderVisitorsHtml(visitors) {
+      let html = '<div class="visitors">';
+      html += '<div class="dept-header"><span>Visitors &mdash; AquaVisitor System</span>';
+      if (visitors) {
+        html += '<span class="dept-count">' + visitors.length + '</span>';
+      }
+      html += '</div>';
+      if (!visitors) {
+        html += '<div class="v-note">Visitor list unavailable — could not reach the '
+          + 'AquaVisitor system. Check <a href="https://aquavisitorsystem.github.io/?report=today" '
+          + 'target="_blank" rel="noopener">today&rsquo;s visitor report</a> directly.</div>';
+      } else if (visitors.length === 0) {
+        html += '<div class="v-note">No visitors scheduled today.</div>';
+      } else {
+        html += '<table>';
+        visitors.forEach(v => {
+          html += '<tr' + (v.left ? ' class="v-left"' : '') + '>';
+          html += '<td class="chk">' + (v.left ? '&mdash;' : '<span class="box"></span>') + '</td>';
+          html += '<td class="name">' + escapeHtml((v.first + ' ' + v.last).trim()) + '</td>';
+          html += '<td class="meta">' + escapeHtml(v.company) + '</td>';
+          html += '<td class="meta">Visiting: ' + escapeHtml(v.host) + '</td>';
+          html += '<td class="' + v.cls + '">' + escapeHtml(v.label) + '</td>';
+          html += '</tr>';
+        });
+        html += '</table>';
+        html += '<div class="v-note">Live from the check-in kiosk as of page load — '
+          + 'reprint for fresh check-ins. Visitors who skip the kiosk show as '
+          + '&ldquo;Not checked in.&rdquo;</div>';
+      }
+      html += '</div>';
+      return html;
+    }
+
+    // ---------- Page assembly ----------
+
+    async function init() {
+      // Visitor fetch runs in parallel with the OOO report fetch; a visitor
+      // failure must never take down the employee roster.
+      const visitorsPromise = fetchTodaysVisitors().catch(err => {
+        console.error('Visitor fetch failed:', err);
+        return null;
+      });
+
+      let report = null;
+      try {
+        const snapshot = await db.collection('ooo_reports')
+          .orderBy('updated_at', 'desc')
+          .limit(1)
+          .get();
+        if (!snapshot.empty) {
+          const doc = snapshot.docs[0];
+          report = { id: doc.id, ...doc.data() };
+        }
+      } catch (err) {
+        console.error('Error fetching OOO data:', err);
+      }
+
+      const visitors = await visitorsPromise;
+      const visitorsHtml = renderVisitorsHtml(visitors);
+      const onSiteNow = visitors ? visitors.filter(v => v.present).length : 0;
+      const visitorCounts = visitors
+        ? visitors.length + ' visitor' + (visitors.length === 1 ? '' : 's')
+          + ' today (' + onSiteNow + ' checked in now)'
+        : 'visitor list unavailable';
+
+      if (!report) {
+        document.getElementById('rpt-date').textContent =
+          new Date().toLocaleDateString('en-US',
+            { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        document.getElementById('rpt-counts').innerHTML = escapeHtml(visitorCounts);
+        content.innerHTML =
+          '<p class="msg">Could not load today’s employee report data.</p>' + visitorsHtml;
+        return;
+      }
+
+      document.getElementById('rpt-date').textContent = report.date || '';
+
+      // Stale check — the newest report may be from a previous day
+      // (weekends, holidays, or a failed morning run).
+      const now = new Date();
+      const todayId = now.getFullYear() + '-'
+        + String(now.getMonth() + 1).padStart(2, '0') + '-'
+        + String(now.getDate()).padStart(2, '0');
+      if (report.id !== todayId) {
+        const banner = document.getElementById('stale-banner');
+        banner.textContent = '⚠ This roster is from ' + (report.date || report.id)
+          + ' — it is NOT today’s roster.';
+        banner.style.display = 'block';
+      }
+
+      const lpRoster = report.lp_roster || [];
+      if (lpRoster.length === 0) {
+        document.getElementById('rpt-counts').innerHTML = escapeHtml(visitorCounts);
+        content.innerHTML = '<p class="msg">No on-site employee list in today’s report.<br>'
+          + 'The report generator (OOO.py) must publish the <b>lp_roster</b> field '
+          + '— this appears automatically after the first morning run of the updated script.</p>'
+          + visitorsHtml;
+        return;
+      }
+
+      // Map of everyone on today's absence report: name -> display string
+      const outMap = {};
+      Object.values(report.departments || {}).forEach(list =>
+        (list || []).forEach(rec => {
+          const key = (rec.person || '').toLowerCase();
+          if (!key) return;
+          // If a name appears twice, keep the "absent" classification.
+          if (outMap[key] === undefined || classify(rec.display) === 'absent') {
+            outMap[key] = rec.display || 'OOO';
+          }
+        }));
+
+      // On premise = LP roster minus everyone absent all day.
+      // Partial-day people stay listed with their out-window noted.
+      const byDept = {};
+      let onPremise = 0, removed = 0, partial = 0;
+      lpRoster.forEach(e => {
+        const person = e.person || '';
+        if (!person) return;
+        const display = outMap[person.toLowerCase()];
+        if (display !== undefined && classify(display) === 'absent') {
+          removed++;
+          return;
+        }
+        const note = display !== undefined ? display : '';
+        if (note) partial++;
+        onPremise++;
+        const dept = e.department || 'Unassigned';
+        (byDept[dept] = byDept[dept] || []).push({ person, note });
+      });
+
+      document.getElementById('rpt-counts').innerHTML =
+        '<b>' + onPremise + '</b> employees expected on premise'
+        + ' &nbsp;&middot;&nbsp; ' + removed + ' out today (OOO / Offsite)'
+        + (partial ? ' &nbsp;&middot;&nbsp; ' + partial + ' away part of the day' : '')
+        + ' &nbsp;&middot;&nbsp; ' + escapeHtml(visitorCounts);
+
+      let html = '<div class="depts">';
+      Object.keys(byDept).sort().forEach(dept => {
+        const people = byDept[dept];
+        people.sort((a, b) => sortKeyLastFirst(a.person) < sortKeyLastFirst(b.person) ? -1 : 1);
+        html += '<div class="dept">';
+        html += '<div class="dept-header"><span>' + escapeHtml(dept) + '</span>'
+          + '<span class="dept-count">' + people.length + '</span></div>';
+        html += '<table>';
+        people.forEach(p => {
+          html += '<tr><td class="chk"><span class="box"></span></td>'
+            + '<td class="name">' + escapeHtml(p.person) + '</td>'
+            + '<td class="note">' + escapeHtml(p.note) + '</td></tr>';
+        });
+        html += '</table></div>';
+      });
+      html += '</div>';
+      content.innerHTML = html + visitorsHtml;
+
+      // Timestamps for the printed footer
+      if (report.updated_at) {
+        const ts = report.updated_at.toDate
+          ? report.updated_at.toDate() : new Date(report.updated_at);
+        document.getElementById('generated-at').textContent =
+          ' · Report generated: ' + ts.toLocaleString();
+      }
+      window.addEventListener('beforeprint', () => {
+        document.getElementById('printed-at').textContent =
+          ' · Printed: ' + new Date().toLocaleString();
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>
