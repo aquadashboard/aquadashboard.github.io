@@ -170,8 +170,6 @@ function renderDashboard(report) {
   html += '<div class="summary-bar">';
   html += '<a href="https://aqualocator.github.io/" target="_blank" rel="noopener">';
   html += '&#128205;&nbsp;View AquaLocator (employee directory &amp; locator)</a>';
-  html += ' &nbsp;&middot;&nbsp; ';
-  html += '<a href="roster.html">&#128424;&nbsp;On-Premise Roster (evacuation reference)</a>';
   html += '</div>';
 
   // Legend
