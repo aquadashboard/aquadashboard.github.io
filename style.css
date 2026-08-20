@@ -207,6 +207,29 @@ body {
   flex-wrap: wrap;
   justify-content: flex-end;
 }
+/* On-Premise Roster call-to-action — solid white pill so it reads as the
+   primary action against the header gradient (constant across themes) */
+.roster-link {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  color: #0d47a1;
+  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 6px;
+  padding: 7px 12px;
+  text-decoration: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.roster-link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+.roster-link:active { transform: translateY(0); }
 .pref-group {
   display: flex;
   align-items: center;
