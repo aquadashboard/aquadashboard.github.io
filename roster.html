@@ -283,7 +283,10 @@
       accountability in a real emergency. The visitor list is live from the
       AquaVisitor check-in kiosk as of the moment this page loaded &mdash;
       reprint for fresh check-ins. Contractors and temps who bypass the
-      kiosk are not listed. Remote employees are excluded.
+      kiosk are not listed. Remote employees are excluded unless they
+      announced an office day (&ldquo;Name &ndash; Onsite&rdquo;) on their
+      departmental calendar &mdash; those appear with a
+      &ldquo;Remote &ndash; on-site today&rdquo; note.
     </div>
 
     <div id="content"><p class="msg">Loading roster&hellip;</p></div>
@@ -333,12 +336,19 @@
       return div.innerHTML;
     }
 
-    function sortKeyLastFirst(name) {
-      const parts = (name || '').trim().split(/\s+/);
-      if (parts.length >= 2) {
-        return (parts[parts.length - 1] + ' ' + parts[0]).toLowerCase();
-      }
-      return (name || '').toLowerCase();
+    // Sort: First Name (asc), then Last Name (asc) — first token, then last
+    // token of the displayed name, so middle initials and suffixes don't
+    // affect the order.  Matches the report's first-name ordering
+    // (HR request, 2026-08-21).
+    function nameSortCmp(nameA, nameB) {
+      const ta = (nameA || '').trim().toLowerCase().split(/\s+/);
+      const tb = (nameB || '').trim().toLowerCase().split(/\s+/);
+      const fa = ta[0] || '', fb = tb[0] || '';
+      if (fa !== fb) return fa < fb ? -1 : 1;
+      const la = ta.length > 1 ? ta[ta.length - 1] : '';
+      const lb = tb.length > 1 ? tb[tb.length - 1] : '';
+      if (la !== lb) return la < lb ? -1 : 1;
+      return 0;
     }
 
     /**
@@ -471,11 +481,8 @@
           cls, label, present, left: cls === 'v-out',
         };
       });
-      rows.sort((a, b) => {
-        const ka = (a.last + ' ' + a.first).toLowerCase();
-        const kb = (b.last + ' ' + b.first).toLowerCase();
-        return ka < kb ? -1 : ka > kb ? 1 : 0;
-      });
+      rows.sort((a, b) =>
+        nameSortCmp(a.first + ' ' + a.last, b.first + ' ' + b.last));
       return rows;
     }
 
@@ -603,8 +610,10 @@
           removed++;
           return;
         }
-        const note = display !== undefined ? display : '';
-        if (note) partial++;
+        // A partial-day out-window beats a roster note ("Remote - on-site
+        // today"); only real absence windows count toward the partial tally.
+        const note = display !== undefined ? display : (e.note || '');
+        if (display !== undefined) partial++;
         onPremise++;
         const dept = e.department || 'Unassigned';
         (byDept[dept] = byDept[dept] || []).push({ person, note });
@@ -619,7 +628,7 @@
       let html = '<div class="depts">';
       Object.keys(byDept).sort().forEach(dept => {
         const people = byDept[dept];
-        people.sort((a, b) => sortKeyLastFirst(a.person) < sortKeyLastFirst(b.person) ? -1 : 1);
+        people.sort((a, b) => nameSortCmp(a.person, b.person));
         html += '<div class="dept">';
         html += '<div class="dept-header"><span>' + escapeHtml(dept) + '</span>'
           + '<span class="dept-count">' + people.length + '</span></div>';
