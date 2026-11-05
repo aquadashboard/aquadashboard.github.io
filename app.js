@@ -102,12 +102,13 @@ function statusFilter(displayStr) {
   const lower = (displayStr || '').toLowerCase();
   if (lower.includes('offsite')) {
     // "Offsite after 2:00 PM" — a typed "after <time>" qualifier ("Brian B
-    // - Offsite (after 2pm)"): the person is in the office before the time
-    // and offsite after it, never OOO — Offsite filter only.
-    if (/^offsite\s+after\b/.test(lower)) return 'offsite';
+    // - Offsite (after 2pm)") — and "Offsite - after 12:00 PM" — an Offsite
+    // block running to end of day: the person is in the office before the
+    // time and offsite after it, never OOO — Offsite filter only.
+    if (/^offsite\s+(-\s+)?after\b/.test(lower)) return 'offsite';
     // A plain all-day "Offsite" shows under the Offsite filter only.
-    // A time-qualified Offsite — "Offsite - Out after 1:30 PM",
-    // "Offsite - Out until 1:00 PM", "Offsite - Out 10:00 AM – 4:00 PM" —
+    // A time-qualified Offsite — "Offsite, Out after 1:30 PM",
+    // "Offsite, Out until 10:00 AM", "Offsite - Out 10:00 AM – 4:00 PM" —
     // means the person is also OUT for part of the day, so it shows under
     // BOTH the OOO and Offsite filters. The presence of a time (any digit)
     // distinguishes the two cases.
