@@ -100,12 +100,12 @@ function statusClass(displayStr) {
  */
 function statusFilter(displayStr) {
   const lower = (displayStr || '').toLowerCase();
-  if (lower.includes('offsite')) {
-    // Any Offsite entry — plain all-day "Offsite", or time-qualified like
-    // "Offsite - 9:00 AM - 1:00 PM" or "Offsite - after 3:00 PM" — shows
-    // under the Offsite filter ONLY, never under OOO (rule set 2026-11-18).
-    return 'offsite';
-  }
+  // Every absence row matches the OOO filter. Offsite entries — plain
+  // all-day "Offsite" or time-qualified like "Offsite - 9:00 AM - 1:00 PM" —
+  // and "Out" partial-day entries like "Out after 3:00 PM" also match the
+  // Offsite filter (rule set 2026-11-20, superseding the Offsite-only
+  // rule of 2026-11-18).
+  if (lower.includes('offsite') || lower.startsWith('out')) return 'ooo offsite';
   return 'ooo';
 }
 
@@ -251,8 +251,9 @@ function applyFilters() {
       const rName = row.getAttribute('data-name') || '';
       const rStatus = row.getAttribute('data-status') || '';
       const nameMatch = !nameQ || rName.indexOf(nameQ) !== -1;
-      // rStatus may hold multiple tokens (e.g. "ooo remote") so a row can
-      // match more than one filter; Offsite rows are Offsite-only.
+      // rStatus may hold multiple tokens (e.g. "ooo offsite", "ooo remote")
+      // so a row can match more than one filter; Offsite/Out rows also
+      // appear under the OOO pill.
       // Roster rows (data-roster) are full-time remote employees who are
       // working today; they show only under the Remote pill, never under
       // All/OOO/Offsite — the report itself stays an absence report.
